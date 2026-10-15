@@ -84,12 +84,9 @@ def summarize(payments):
         groups[p["customer"]].append(p["amount"])
 
     totals = {key: sum(value) for key, value in groups.items()}
-    
-    # ... code from #6 -> failure_rates
     total_count = {}
     failed_count = {}
 
-    # 1. Populate the counts using standard dictionaries
     for p in payments:
         c = p["customer"]
     
