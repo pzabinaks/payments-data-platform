@@ -1,6 +1,7 @@
 from pathlib import Path
 import csv
 from datetime import datetime
+import pandas as pd
 
 p = Path('data/raw/payments_raw.csv')
 
@@ -23,7 +24,7 @@ print (f"Row count: {csv_reader.line_num} ")
 distinct_status_list = []
 distinct_currency_list =[]
 
-payments =[]
+payments = set()
 duplicate_payments =[]
 
 wrong_amounts = []
@@ -75,12 +76,10 @@ with open(p) as f:
             distinct_status_list.append(row[5])
 
          #payemnt uniqueness check - payment id is a PK, must be unique
-
-        try:
-            index = payments.index(row[0])
+        if row[0] in payments:
             duplicate_payments.append(row[0])   
-        except ValueError:
-            payments.append(row[0])            
+        else:
+            payments.add(row[0])            
 
         try:
             index = distinct_currency_list.index(row[4])
@@ -123,7 +122,7 @@ print (f"l_missing_date: {l_missing_date}")
 print (f"Invalid amounts: {wrong_amounts}")
 #print (f"Invalid dates: {wrong_dates}")
 #print (f"Invalid date count: {len(set(wrong_dates))}")
-print (f"Duplicate payments: {duplicate_payments}") 
+#print (f"Duplicate payments: {duplicate_payments}") 
 
 
 # Data quality issues
@@ -133,3 +132,49 @@ print (f"Duplicate payments: {duplicate_payments}")
 # missing items - customers
 # wrong date formats
 # leading space for Status
+# payment id is not unique
+
+def clean_column_names(df):
+    df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+    return df.rename(columns={"customer": "customer_id"})
+
+def clean_amount(df):
+    df["amount"] = df["amount"].str.replace(",", ".").astype(float)
+    return df
+
+def clean_currency(df):
+    df["currency"] = df["currency"].str.upper().astype("category")
+    return df
+
+def clean_status(df):
+    df["status"] = df["status"].str.strip().str.lower().astype("category")
+    return df
+
+def clean_dates(df):
+    df["created_at"] = pd.to_datetime(df["created_at"], format="mixed", dayfirst=True)
+    return df
+
+def remove_duplicates(df):
+    df["customer_id"] = df["customer_id"].fillna("Duplicate record removed")
+    return df    
+
+df = pd.read_csv(p)
+print(df.columns.tolist())      # BEFORE: ['Payment ID', ' Customer ', 'Merchant', 'Amount', ...]
+
+df = clean_column_names(df)     # step 1: always first
+print(df.columns.tolist())      # AFTER:  ['payment_id', 'customer_id', 'merchant', 'amount', ...]
+
+df = clean_amount(df)           # step 2: can now use the clean name
+df = clean_status(df)
+df = clean_currency(df)
+df = clean_dates(df)
+df = remove_duplicates(df)
+# ...
+
+
+
+paid_total = df.loc[df["status"] == "paid", "amount"].sum()
+print(len(df)) 
+print (f"Paid total: {paid_total}")
+
+df.info()                       # amount should now show as float64
