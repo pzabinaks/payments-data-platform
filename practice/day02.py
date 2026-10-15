@@ -1,5 +1,6 @@
 from pathlib import Path
 import csv
+from datetime import datetime
 
 p = Path('data/raw/payments_raw.csv')
 
@@ -12,6 +13,7 @@ print()
 #task nr2
 with open(p) as f:
     csv_reader = csv.reader(f)
+    next(csv_reader) # Skip the header row if your file has one
     for row in csv_reader:
         pass
 print (f"Row count: {csv_reader.line_num} ")
@@ -20,6 +22,10 @@ print (f"Row count: {csv_reader.line_num} ")
 #task nr3 and nr4
 distinct_status_list = []
 distinct_currency_list =[]
+wrong_amounts = []
+wrong_dates = []
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 l_missing_payment_id  = 0
 l_missing_Customer  = 0
 l_missing_Merchant = 0
@@ -66,6 +72,22 @@ with open(p) as f:
         except ValueError:
             distinct_currency_list.append(row[4])
 
+        try:
+            # I believe , is fine as decimal sign too
+            number = float(row[3].replace(',', '.'))
+        except ValueError:
+            wrong_amounts.append(row[3])
+
+        # Lets check date format
+        try:
+            valid_date = datetime.strptime(row[6], DATE_FORMAT)
+        except ValueError:
+             wrong_dates.append(row[6])
+                
+
+for status in sorted(distinct_status_list):
+    print(repr(status))
+
 #        if row['Status'] not in distinct_list:
 #            distinct_list.append(row['Status'])
 print (f"Distinct statuses: {distinct_status_list}")
@@ -82,10 +104,15 @@ print (f"l_missing_status: {l_missing_status}")
 print (f"l_missing_date: {l_missing_date}")
 
 
+print (f"Invalid amounts: {wrong_amounts}")
+print (f"Invalid dates: {wrong_dates}")
+
 
 
 # Data quality issues
 # Upper lower case values for statuses
 # Upper lower case values for currency
 # Space symbol for some currency records ' EUR'
-# missing items 
+# missing items - customers
+# wrong date formats
+# leading space for Status
