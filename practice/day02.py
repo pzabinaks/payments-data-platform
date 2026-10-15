@@ -143,7 +143,7 @@ def clean_amount(df):
     return df
 
 def clean_currency(df):
-    df["currency"] = df["currency"].str.upper().astype("category")
+    df["currency"] = df["currency"].str.upper().str.strip().astype("category")
     return df
 
 def clean_status(df):
