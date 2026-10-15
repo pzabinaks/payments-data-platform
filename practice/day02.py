@@ -155,11 +155,15 @@ def clean_dates(df):
     return df
 
 def remove_duplicates(df):
-    df["customer_id"] = df["customer_id"].fillna("Duplicate record removed")
-    return df    
+    return df.drop_duplicates()
+
+def fill_unknown_customer(df):
+    df["customer_id"] = df["customer_id"].fillna("UNKNOWN")
+    return df
 
 df = pd.read_csv(p)
-print(df.columns.tolist())      # BEFORE: ['Payment ID', ' Customer ', 'Merchant', 'Amount', ...]
+#print(df.columns.tolist())      # BEFORE: ['Payment ID', ' Customer ', 'Merchant', 'Amount', ...]
+overall_records = len(df)
 
 df = clean_column_names(df)     # step 1: always first
 print(df.columns.tolist())      # AFTER:  ['payment_id', 'customer_id', 'merchant', 'amount', ...]
@@ -169,12 +173,33 @@ df = clean_status(df)
 df = clean_currency(df)
 df = clean_dates(df)
 df = remove_duplicates(df)
-# ...
 
+duplicates_removed = overall_records - len(df)
 
+df = fill_unknown_customer(df)
 
+unknown_customers = df.loc[df["customer_id"] == "UNKNOWN", "customer_id"].count()
 paid_total = df.loc[df["status"] == "paid", "amount"].sum()
-print(len(df)) 
-print (f"Paid total: {paid_total}")
 
-df.info()                       # amount should now show as float64
+#print(len(df)) 
+print (f"rows read:           {overall_records}")    
+print (f"duplicates removed:  {duplicates_removed}")        
+print (f"missing customer:    {unknown_customers}")
+print (f"rows written:        {overall_records - duplicates_removed}")   
+print (f"Paid total:          {paid_total:.2f}")
+
+#df.info()                       # amount should now show as float64
+
+
+
+out = Path("data/clean")
+out.mkdir(parents=True, exist_ok=True)
+df.to_csv(out / "payments.csv", index=False)
+df.to_json(out / "payments.json", orient="records", lines=True, date_format="iso")
+df.to_parquet(out / "payments.parquet", index=False)
+
+for f in sorted(out.iterdir()):
+    print(f"{f.name:20} {f.stat().st_size / 1024 / 1024:.2f} MB")
+
+pd.read_parquet(out / "payments.parquet").info()   # types survive
+pd.read_csv(out / "payments.csv").info()           # types l
