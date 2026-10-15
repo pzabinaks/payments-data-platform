@@ -22,6 +22,10 @@ print (f"Row count: {csv_reader.line_num} ")
 #task nr3 and nr4
 distinct_status_list = []
 distinct_currency_list =[]
+
+payments =[]
+duplicate_payments =[]
+
 wrong_amounts = []
 wrong_dates = []
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -33,6 +37,10 @@ l_missing_Amount = 0
 l_missing_currency = 0 
 l_missing_status = 0
 l_missing_date = 0 
+
+with open(p, newline="", encoding="utf-8") as f:
+    header = next(csv.reader(f))
+print(header)          # a list, so repr() is applied automatically
 
 
 with open(p) as f:
@@ -65,6 +73,14 @@ with open(p) as f:
             #print("String found at index", index)
         except ValueError:
             distinct_status_list.append(row[5])
+
+         #payemnt uniqueness check - payment id is a PK, must be unique
+
+        try:
+            index = payments.index(row[0])
+            duplicate_payments.append(row[0])   
+        except ValueError:
+            payments.append(row[0])            
 
         try:
             index = distinct_currency_list.index(row[4])
@@ -105,8 +121,9 @@ print (f"l_missing_date: {l_missing_date}")
 
 
 print (f"Invalid amounts: {wrong_amounts}")
-print (f"Invalid dates: {wrong_dates}")
-
+#print (f"Invalid dates: {wrong_dates}")
+#print (f"Invalid date count: {len(set(wrong_dates))}")
+print (f"Duplicate payments: {duplicate_payments}") 
 
 
 # Data quality issues
