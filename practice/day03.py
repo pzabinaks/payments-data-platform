@@ -48,6 +48,11 @@ df = pd.DataFrame(rates)
 df["date"] = pd.to_datetime(df["date"])
 
 
+
+outside = ~df["date"] .between("2026-01-01", "2026-10-15")          # ~ means NOT
+if outside.any():
+    print(f" WARNING: {outside.sum()} rows outside requested date range")
+
 assert not df["date"].dt.day_name().isin(["Sunday", "Saturday"]).any(), "Weekend dates!"
 
 dupes = df.duplicated(subset=["date", "base", "quote"], keep=False).sum()
@@ -67,11 +72,20 @@ for name, (url, params) in tests.items():
     try:
         r = session.get(url, params=params, timeout=10)
         
-        if not rates:
-            raise ValueError("API returned no rates for this period")
+        data = r.json()
+
         
         print(f"{name:18} status {r.status_code}")
         r.raise_for_status()
         print(f"{name:18} no error raised! response: {r.text[:100]}")
+        if not data:
+            raise ValueError("API returned no rates for this period")
+
+        df = pd.DataFrame(data)
+        dates = pd.to_datetime(df["date"])
+        outside = ~dates.between("2026-10-03", "2026-10-04")          # ~ means NOT
+        if outside.any():
+            print(f"{name:18} WARNING: {outside.sum()} rows outside requested range ")
+
     except requests.exceptions.HTTPError as e:
         print(f"{name:18} HTTPError: {e}")
