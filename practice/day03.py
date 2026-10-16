@@ -56,3 +56,22 @@ assert dupes == 0, f"{dupes} duplicate rate rows!"
 print("rates per currency:")
 print(df.groupby("quote")["rate"].agg(["count", "min", "max"]))
 
+# --- failure tests ---
+tests = {
+    "wrong path":       ("https://api.frankfurter.dev/v2/ratez", {"quotes": "gbp"}),
+    "invalid currency": (BASE_URL, {"quotes": "EUR", "providers": "ecb"}),
+    "weekend date":         (BASE_URL, {"from": "2026-10-03","to": "2026-10-04","quotes": "gbp", "providers": "ecb"}),
+}
+
+for name, (url, params) in tests.items():
+    try:
+        r = session.get(url, params=params, timeout=10)
+        
+        if not rates:
+            raise ValueError("API returned no rates for this period")
+        
+        print(f"{name:18} status {r.status_code}")
+        r.raise_for_status()
+        print(f"{name:18} no error raised! response: {r.text[:100]}")
+    except requests.exceptions.HTTPError as e:
+        print(f"{name:18} HTTPError: {e}")
