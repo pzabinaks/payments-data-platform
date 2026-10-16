@@ -151,7 +151,9 @@ def clean_status(df):
     return df
 
 def clean_dates(df):
-    df["created_at"] = pd.to_datetime(df["created_at"], format="mixed", dayfirst=True)
+    iso = pd.to_datetime(df["created_at"], format="%Y-%m-%d %H:%M:%S", errors="coerce")
+    eu  = pd.to_datetime(df["created_at"], format="%d.%m.%Y", errors="coerce")
+    df["created_at"] = iso.fillna(eu)
     return df
 
 def remove_duplicates(df):
@@ -190,7 +192,9 @@ print (f"Paid total:          {paid_total:.2f}")
 
 #df.info()                       # amount should now show as float64
 
-
+assert df["created_at"].isna().sum() == 0, "unparsed dates!"
+assert df["created_at"].max() <= pd.Timestamp.now(), "dates in the future!"
+print(f"date range:          {df['created_at'].min()} .. {df['created_at'].max()}")
 
 out = Path("data/clean")
 out.mkdir(parents=True, exist_ok=True)
