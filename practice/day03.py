@@ -2,10 +2,13 @@ from pathlib import Path
 import json
 import requests
 import pandas as pd
+from requests.adapters import HTTPAdapter     # part of requests
+from urllib3.util.retry import Retry          # urllib3 is installed automatically together with request
+
 
 BASE_URL = "https://api.frankfurter.dev/v2/rates"
 
-def fetch_rates(start, end, quotes,providers):
+def fetch_rates_old(start, end, quotes,providers):
     """Fetch daily EUR exchange rates between start and end (YYYY-MM-DD)."""
     r = requests.get(BASE_URL,
                      params={"from": start, "to": end, "quotes": quotes,"providers": providers},
@@ -22,11 +25,24 @@ def save_raw(data, start, end):
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-    ...   # your task: write data as JSON to data/raw/fx/fx_rates_<start>_<end>.json
-          # hints: Path(...).mkdir(parents=True, exist_ok=True), json.dump(data, f, indent=2)
+def make_session():
+    retry = Retry(
+        total=3,                                  # at most 3 retries
+        backoff_factor=1,                         # wait about 1s, 2s, 4s between them
+        status_forcelist=[429, 500, 502, 503, 504],  # only retry these status codes
+    )
+    session = requests.Session()
+    session.mount("https://", HTTPAdapter(max_retries=retry))   # apply to all https:// calls
+    return session
 
+def fetch_rates(session, start, end, quotes, providers):
+    r = session.get(BASE_URL, params={"from": start, "to": end, "quotes": quotes,"providers": providers}, timeout=10)    # session.get instead of requests.get
+    r.raise_for_status()
+    return r.json()
 
-rates = fetch_rates("2026-01-01", "2026-10-15", "gbp,usd", "ecb")
+session = make_session()
+rates = fetch_rates(session,"2026-01-01", "2026-10-15", "gbp,usd", "ecb")
+save_raw(rates, "2026-01-01", "2026-10-15")
 
 df = pd.DataFrame(rates)
 df["date"] = pd.to_datetime(df["date"])
@@ -34,8 +50,9 @@ df["date"] = pd.to_datetime(df["date"])
 
 assert not df["date"].dt.day_name().isin(["Sunday", "Saturday"]).any(), "Weekend dates!"
 
+dupes = df.duplicated(subset=["date", "base", "quote"], keep=False).sum()
+assert dupes == 0, f"{dupes} duplicate rate rows!"
+
+print("rates per currency:")
 print(df.groupby("quote")["rate"].agg(["count", "min", "max"]))
-print(df.duplicated(subset=["date", "base","quote"],keep=False).sum())
-      
-#print(f"records fetched: {len(rates)}")
-save_raw(rates, "2026-01-01", "2026-10-15")
+
