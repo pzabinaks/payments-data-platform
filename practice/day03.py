@@ -19,21 +19,23 @@ def save_raw(data, start, end):
     filename = savepath / f"fx_rates_{start}_{end}.json"
 
     #create file
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
     ...   # your task: write data as JSON to data/raw/fx/fx_rates_<start>_<end>.json
           # hints: Path(...).mkdir(parents=True, exist_ok=True), json.dump(data, f, indent=2)
 
 
-rates = fetch_rates("2026-01-01", "2026-10-15", "gbp,usd",'ecb')
+rates = fetch_rates("2026-01-01", "2026-10-15", "gbp,usd", "ecb")
 
 df = pd.DataFrame(rates)
 df["date"] = pd.to_datetime(df["date"])
 
 
-assert df["date"].dt.day_name().isin(["Sunday", "Saturday"]).all(), "Weekend dates!"
+assert not df["date"].dt.day_name().isin(["Sunday", "Saturday"]).any(), "Weekend dates!"
 
-print(df)
+print(df.groupby("quote")["rate"].agg(["count", "min", "max"]))
+print(df.duplicated(subset=["date", "base","quote"],keep=False).sum())
+      
 #print(f"records fetched: {len(rates)}")
-#save_raw(rates, "2026-01-01", "2026-10-15")
+save_raw(rates, "2026-01-01", "2026-10-15")
