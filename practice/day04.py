@@ -50,20 +50,24 @@ with psycopg.connect(DSN) as conn:
 
 with psycopg.connect(DSN) as conn:
 
-    with open(r"/home/pzabinaks/dev/payments-data-platform/data/raw/fx/fx_rates_2026-01-01_2026-10-15.json", 'r') as data_file:
+    with open(r"data/raw/fx/fx_rates_2026-01-01_2026-10-15.json", 'r') as data_file:
         data = json.load(data_file)
 
-    for item in data:
-    # Replace the keys below with the keys in your JSON data
-        date = item['date']
-        base = item['base']
-        quote = item['quote']
-        rate = item['rate']
+    fx_rows = [(r["date"], r["base"], r["quote"], r["rate"]) for r in data]   # list comprehension, like Day 1
 
     with conn.cursor() as cursor:
-        cursor.execute("""INSERT INTO fx_rates (rate_date, base, quote, rate)
+        cursor.executemany("""INSERT INTO fx_rates (rate_date, base, quote, rate)
                         VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (rate_date, base, quote) DO UPDATE SET rate = EXCLUDED.rate""", (date, base, quote, rate))
+                        ON CONFLICT (rate_date, base, quote) DO UPDATE SET rate = EXCLUDED.rate""", fx_rows)
                     
+        #row_count = conn.execute("""SELECT COUNT(1)  FROM fx_rates""").fetchone()
+        #print(f"Rates:      {row_count}")
     conn.commit()
-    conn.close()
+
+    df_paid = round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
+    print(f"paid total (file): {df_paid:,.2f}")
+
+    assert row_count == len(df), f"row count mismatch: DB {row_count} vs file {len(df)}"
+    assert paid_total == round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
+
+ 
