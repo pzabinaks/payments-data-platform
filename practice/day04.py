@@ -63,11 +63,12 @@ with psycopg.connect(DSN) as conn:
         #row_count = conn.execute("""SELECT COUNT(1)  FROM fx_rates""").fetchone()
         #print(f"Rates:      {row_count}")
     conn.commit()
-
+    
     df_paid = round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
     print(f"paid total (file): {df_paid:,.2f}")
 
     assert row_count == len(df), f"row count mismatch: DB {row_count} vs file {len(df)}"
-    assert paid_total == round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
+    from decimal import Decimal
+    assert paid_total == Decimal(f"{df_paid:.2f}")
 
  
