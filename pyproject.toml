@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pandas>=3.0.6",
+    "psycopg[binary]>=3.3.6",
     "pyarrow<26",
     "requests>=2.34.2",
+    "sqlalchemy>=2.1.5",
 ]
 
 [project.scripts]
