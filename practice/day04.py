@@ -48,6 +48,14 @@ with psycopg.connect(DSN) as conn:
     print(f"paid total (DB): {paid_total:,.2f}")
 
 
+    df_paid = round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
+    print(f"paid total (file): {df_paid:,.2f}")
+
+    assert row_count == len(df), f"row count mismatch: DB {row_count} vs file {len(df)}"
+    from decimal import Decimal
+    assert paid_total == Decimal(f"{df_paid:.2f}")
+
+
 with psycopg.connect(DSN) as conn:
 
     with open(r"data/raw/fx/fx_rates_2026-01-01_2026-10-15.json", 'r') as data_file:
@@ -60,15 +68,10 @@ with psycopg.connect(DSN) as conn:
                         VALUES (%s, %s, %s, %s)
                         ON CONFLICT (rate_date, base, quote) DO UPDATE SET rate = EXCLUDED.rate""", fx_rows)
                     
-        #row_count = conn.execute("""SELECT COUNT(1)  FROM fx_rates""").fetchone()
-        #print(f"Rates:      {row_count}")
+    fx_count = conn.execute("SELECT COUNT(*) FROM fx_rates").fetchone()[0]
+    assert fx_count == len(fx_rows), f"fx rows: DB {fx_count} vs file {len(fx_rows)}"
+    
     conn.commit()
     
-    df_paid = round(df.loc[df["status"] == "paid", "amount"].sum(), 2)
-    print(f"paid total (file): {df_paid:,.2f}")
-
-    assert row_count == len(df), f"row count mismatch: DB {row_count} vs file {len(df)}"
-    from decimal import Decimal
-    assert paid_total == Decimal(f"{df_paid:.2f}")
-
+ 
  
