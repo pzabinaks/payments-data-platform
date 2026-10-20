@@ -23,4 +23,9 @@ def test_clean_payments_end_to_end():
     assert len(df) == 2
     assert list(df.columns) == ["payment_id", "customer_id", "merchant", "amount",
                                 "currency", "status", "created_at"]
-    assert df["created_at"].dtype.kind == "M"       # "M" = datetime type    
+    assert df["created_at"].dtype.kind == "M"       # "M" = datetime type
+    assert df.loc[0, "amount"] == 75.5
+ 
+    assert df.loc[1, "customer_id"] == "UNKNOWN"
+    assert df.loc[0, "created_at"] == pd.Timestamp("2026-08-01 16:19:49")   # 1 August, not 8 January
+    assert df.loc[1, "created_at"] == pd.Timestamp("2026-09-07")            # 7 September    
