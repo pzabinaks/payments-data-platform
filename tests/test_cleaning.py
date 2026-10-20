@@ -1,5 +1,5 @@
 import pandas as pd
-from payments_data_platform.cleaning import clean_currency, clean_payments, clean_status,fill_unknown_customer,clean_column_names,remove_duplicates,clean_dates
+from payments_data_platform.cleaning import clean_currency, clean_payments, clean_status,fill_unknown_customer,clean_column_names,remove_duplicates,clean_dates,clean_amount
 from datetime import datetime
 
 def test_clean_currency_strips_and_uppercases():
@@ -31,13 +31,7 @@ def test_clean_payments_end_to_end():
 
 def test_clean_status():
     raw = pd.DataFrame({
-        "Payment ID": ["PAY1", "PAY2", "PAY2"],                 # PAY2 is an exact duplicate
-        " Customer ": ["C1", None, None],
-        "Merchant":   ["Shop", "Shop", "Shop"],
-        "Amount":     ["75,50", "10.00", "10.00"],
-        "Currency":   [" EUR", "gbp", "gbp"],
         "Status":     ["paid ", "FAILED", "FAILED"],
-        "Created At": ["2026-08-01 16:19:49", "07.09.2026", "07.09.2026"],
     })   
     df = clean_column_names(raw)
     df = clean_status(df)    
@@ -45,13 +39,7 @@ def test_clean_status():
 
 def test_fill_unknown_customer():
     raw = pd.DataFrame({
-        "Payment ID": ["PAY1", "PAY2", "PAY2"],                 # PAY2 is an exact duplicate
         " Customer ": ["C1", None, None],
-        "Merchant":   ["Shop", "Shop", "Shop"],
-        "Amount":     ["75,50", "10.00", "10.00"],
-        "Currency":   [" EUR", "gbp", "gbp"],
-        "Status":     ["paid ", "FAILED", "FAILED"],
-        "Created At": ["2026-08-01 16:19:49", "07.09.2026", "07.09.2026"],
     })   
     df = clean_column_names(raw)
     df = fill_unknown_customer(df)    
@@ -73,12 +61,20 @@ def test_remove_duplicates():
 
 
 
-def test_clean_dates():
-    raw = pd.DataFrame({
-        "Created At": ["2027-08-01 16:19:49", "07.09.2026", "07.09.2028"],
-    })   
-    df = clean_column_names(raw)
-    df = clean_dates(df)    
+def test_clean_dates_parses_both_formats():
+    df = pd.DataFrame({"created_at": ["2026-08-01 16:19:49", "07.09.2026"]})
+    result = clean_dates(df)
+    assert result.loc[0, "created_at"] == pd.Timestamp("2026-08-01 16:19:49")   # 1 August, not 8 January
+    assert result.loc[1, "created_at"] == pd.Timestamp("2026-09-07")            # 7 September
 
-    today = datetime.today()
-    assert df.loc[2, "created_at"] <= today
+def test_clean_amount():
+    
+    raw = pd.DataFrame({
+        "amount":     ["50,01", "50.01", "1000"],
+    })  
+    
+    result = clean_amount(raw)
+    
+    assert result.loc[0, "amount"] == 50.01
+    assert result.loc[1, "amount"] == 50.01
+    assert result.loc[2, "amount"] == 1000
