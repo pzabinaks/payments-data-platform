@@ -35,7 +35,7 @@ def test_clean_status():
     })   
     df = clean_column_names(raw)
     df = clean_status(df)    
-    assert df.loc[1, "status"] == "paid"
+    assert list(df["status"]) == ["paid", "failed", "failed"]
 
 def test_fill_unknown_customer():
     raw = pd.DataFrame({
