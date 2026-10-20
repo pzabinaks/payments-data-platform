@@ -7,7 +7,7 @@ from urllib3.util.retry import Retry          # urllib3 is installed automatical
 
 
 BASE_URL = "https://api.frankfurter.dev/v2/rates"
-
+START, END = "2026-01-01", "2026-10-15"
 def fetch_rates_old(start, end, quotes,providers):
     """Fetch daily EUR exchange rates between start and end (YYYY-MM-DD)."""
     r = requests.get(BASE_URL,
@@ -41,15 +41,15 @@ def fetch_rates(session, start, end, quotes, providers):
     return r.json()
 
 session = make_session()
-rates = fetch_rates(session,"2026-01-01", "2026-10-15", "gbp,usd", "ecb")
-save_raw(rates, "2026-01-01", "2026-10-15")
+rates = fetch_rates(session,START, END, "gbp,usd", "ecb")
+save_raw(rates, START, END)
 
 df = pd.DataFrame(rates)
 df["date"] = pd.to_datetime(df["date"])
 
 
 
-outside = ~df["date"] .between("2026-01-01", "2026-10-15")          # ~ means NOT
+outside = ~df["date"] .between(START, END)          # ~ means NOT
 if outside.any():
     print(f" WARNING: {outside.sum()} rows outside requested date range")
 
@@ -64,7 +64,7 @@ print(df.groupby("quote")["rate"].agg(["count", "min", "max"]))
 # --- failure tests ---
 tests = {
     "wrong path":       ("https://api.frankfurter.dev/v2/ratez", {"quotes": "gbp"}),
-    "invalid currency": (BASE_URL, {"quotes": "EUR", "providers": "ecb"}),
+    "invalid currency": (BASE_URL, {"quotes": "xyz", "providers": "ecb"}),
     "weekend date":         (BASE_URL, {"from": "2026-10-03","to": "2026-10-04","quotes": "gbp", "providers": "ecb"}),
 }
 
@@ -72,12 +72,15 @@ for name, (url, params) in tests.items():
     try:
         r = session.get(url, params=params, timeout=10)
         
-        data = r.json()
+        
 
         
         print(f"{name:18} status {r.status_code}")
         r.raise_for_status()
+        
+        
         print(f"{name:18} no error raised! response: {r.text[:100]}")
+        data = r.json()
         if not data:
             raise ValueError("API returned no rates for this period")
 
