@@ -43,6 +43,7 @@ def clean_payments(df: pd.DataFrame) -> pd.DataFrame:
     df = clean_amount(df)
     df = clean_currency(df)
     df = clean_status(df)
+    #df = clean_dates(df)
     df = remove_duplicates(df)
     df = fill_unknown_customer(df)
 
