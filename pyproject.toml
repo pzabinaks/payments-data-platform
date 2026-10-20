@@ -10,6 +10,7 @@ dependencies = [
     "pyarrow<26",
     "requests>=2.34.2",
     "sqlalchemy>=2.1.5",
+    "urllib3>=2.8.0",
 ]
 
 [project.scripts]
@@ -18,3 +19,18 @@ payments-data-platform = "payments_data_platform:main"
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]   # style errors, real bugs, import order, common pitfalls
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
