@@ -1,38 +1,38 @@
 """Cleaning rules for the raw payments export."""
 import pandas as pd
 
-def clean_column_names(df):
+def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     """Clean column names. Replace space with _"""
     df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
     return df.rename(columns={"customer": "customer_id"})
 
-def clean_amount(df):
+def clean_amount(df: pd.DataFrame) -> pd.DataFrame:
     """Convert to float. Replace , with ."""
     df["amount"] = df["amount"].str.replace(",", ".").astype(float)
     return df
 
-def clean_currency(df):
+def clean_currency(df: pd.DataFrame) -> pd.DataFrame:
     """Truncate spaces for currency"""
     df["currency"] = df["currency"].str.upper().str.strip().astype("category")
     return df
 
-def clean_status(df):
+def clean_status(df: pd.DataFrame) -> pd.DataFrame:
     """Truncate spaces for status"""
     df["status"] = df["status"].str.strip().str.lower().astype("category")
     return df
 
-def clean_dates(df):
+def clean_dates(df: pd.DataFrame) -> pd.DataFrame:
     """Convert correct date formats (iso,eu)"""
     iso = pd.to_datetime(df["created_at"], format="%Y-%m-%d %H:%M:%S", errors="coerce")
     eu  = pd.to_datetime(df["created_at"], format="%d.%m.%Y", errors="coerce")
     df["created_at"] = iso.fillna(eu)
     return df
 
-def remove_duplicates(df):
+def remove_duplicates(df: pd.DataFrame) -> pd.DataFrame:
     """Removes duplicates"""
     return df.drop_duplicates()
 
-def fill_unknown_customer(df):
+def fill_unknown_customer(df: pd.DataFrame) -> pd.DataFrame:
     """Fill non defined customer_ids with phrase UNKNOWN"""
     df["customer_id"] = df["customer_id"].fillna("UNKNOWN")
     return df
