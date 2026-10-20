@@ -1,7 +1,6 @@
 import pandas as pd
-from payments_data_platform.cleaning import clean_currency, clean_payments, clean_status,fill_unknown_customer,clean_column_names,remove_duplicates
-
-
+from payments_data_platform.cleaning import clean_currency, clean_payments, clean_status,fill_unknown_customer,clean_column_names,remove_duplicates,clean_dates
+from datetime import datetime
 
 def test_clean_currency_strips_and_uppercases():
     df = pd.DataFrame({"currency": [" EUR", "eur", "GBP"]})
@@ -70,4 +69,16 @@ def test_remove_duplicates():
     })   
     df = clean_column_names(raw)
     df = remove_duplicates(df)    
-    assert df.loc[2, "customer_id"] == None
+    assert 2 not in df.index
+
+
+
+def test_clean_dates():
+    raw = pd.DataFrame({
+        "Created At": ["2027-08-01 16:19:49", "07.09.2026", "07.09.2028"],
+    })   
+    df = clean_column_names(raw)
+    df = clean_dates(df)    
+
+    today = datetime.today()
+    assert df.loc[2, "created_at"] <= today
