@@ -5,7 +5,7 @@ with open("data/raw/fx/fx_rates_2026-01-01_2026-10-15.json", encoding="utf-8") a
     rates = pd.DataFrame(json.load(f))
 
 
-payments_all  = pd.read_parquet("data/clean/payments.parquet")
+payments_all = pd.read_parquet("data/clean/payments.parquet")
 payments_paid = payments_all[payments_all["status"] == "paid"]
 
 
@@ -85,7 +85,7 @@ totals["rn"] = totals.groupby("merchant")["amount"].rank(method="first", ascendi
 
 task_4 = totals[totals["rn"] <= 3]
 
-print(task_4)
+print(task_4.sort_values(["merchant", "rn"]))
 print()
 
 
@@ -99,10 +99,8 @@ running_total = daily.cumsum()
 
 task_5 = pd.DataFrame({"daily": daily, "running_total": daily.cumsum()})
 print(task_5.head())
-print(task_5.tail())   
+print(task_5.tail())
 print()
-
-
 
 
 # Task #6  ---------------------------------------------------
@@ -118,11 +116,15 @@ ordered_payments = payments_paid_known.sort_values(by=["customer_id", "created_a
 
 ordered_payments["prev_payment"] = ordered_payments.groupby("customer_id")["created_at"].shift(1)
 
-ordered_payments["gap"] = (ordered_payments["created_at"] - ordered_payments["prev_payment"]).dt.total_seconds() / 3600
+ordered_payments["gap"] = (
+    ordered_payments["created_at"] - ordered_payments["prev_payment"]
+).dt.total_seconds() / 3600
 print(ordered_payments)
 print()
 
-
+# avarage gap
+print(f"Avarage gap : {ordered_payments['gap'].mean()}")
+print()
 
 
 # Task #7  ---------------------------------------------------
@@ -140,4 +142,6 @@ all_in_eur = pd.merge_asof(payments_gbp, rates_gbp_ordered, on="created_at", dir
 all_in_eur["amount_eur"] = all_in_eur["amount"] / all_in_eur["rate"]
 print(f"GBP->EUR total (pandas): {all_in_eur['amount_eur'].sum():,.2f}")
 
-print(all_in_eur["rate"].isna().sum()) 
+print(f"{all_in_eur['amount_eur'].round(2).sum():,.2f}")
+
+print(all_in_eur["rate"].isna().sum())
