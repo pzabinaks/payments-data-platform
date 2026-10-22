@@ -1,7 +1,12 @@
 import pandas as pd
+import json
+
+with open("data/raw/fx/fx_rates_2026-01-01_2026-10-15.json", encoding="utf-8") as f:
+    rates = pd.DataFrame(json.load(f))
+
 
 payments_all  = pd.read_parquet("data/clean/payments.parquet")
-payments_paid = payments_all[payments_all["status"] == "payments_paid"]
+payments_paid = payments_all[payments_all["status"] == "paid"]
 
 
 # Task #1  ----------------------------------------------------
@@ -106,15 +111,28 @@ print()
 #        created_at - prev_payment AS gap
 # FROM payments WHERE customer_id <> 'UNKNOWN';
 
-payments_paid_known = payments_all[(payments_all["customer_id"] != "UNKNOWN") & (payments_all["customer_id"] =="CUST00001")].copy()
+payments_paid_known = payments_all[(payments_all["customer_id"] != "UNKNOWN")].copy()
 
 
 ordered_payments = payments_paid_known.sort_values(by=["customer_id", "created_at"])
 
 ordered_payments["prev_payment"] = ordered_payments.groupby("customer_id")["created_at"].shift(1)
 
-ordered_payments["gap"] = (ordered_payments["created_at"] - ordered_payments["prev_payment"]).dt.days
+ordered_payments["gap"] = (ordered_payments["created_at"] - ordered_payments["prev_payment"]).dt.total_seconds() / 3600
 print(ordered_payments)
 print()
 
 
+
+
+# Task #7  ---------------------------------------------------
+rates_gbp = rates[rates["quote"] == "GBP"].copy()
+
+rates_gbp["created_at"] = pd.to_datetime(rates_gbp["date"])
+
+rates_gbp_ordered = rates_gbp.sort_values(["created_at"], ascending=True)
+
+
+payments_paid_ordered =  payments_paid.sort_values(["created_at"], ascending=True)
+
+all_in_eur = pd.merge_asof(payments_paid_ordered, rates_gbp_ordered, left_on="created_at", right_on="date", direction="backward")."backward"
