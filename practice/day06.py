@@ -136,4 +136,8 @@ payments_gbp = payments_paid[payments_paid["currency"] == "GBP"].sort_values("cr
 
 
 all_in_eur = pd.merge_asof(payments_gbp, rates_gbp_ordered, on="created_at", direction="backward")
+
+all_in_eur["amount_eur"] = all_in_eur["amount"] / all_in_eur["rate"]
+print(f"GBP->EUR total (pandas): {all_in_eur['amount_eur'].sum():,.2f}")
+
 print(all_in_eur["rate"].isna().sum()) 
