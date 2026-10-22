@@ -132,7 +132,8 @@ rates_gbp["created_at"] = pd.to_datetime(rates_gbp["date"])
 
 rates_gbp_ordered = rates_gbp.sort_values(["created_at"], ascending=True)
 
+payments_gbp = payments_paid[payments_paid["currency"] == "GBP"].sort_values("created_at")
 
-payments_paid_ordered =  payments_paid.sort_values(["created_at"], ascending=True)
 
-all_in_eur = pd.merge_asof(payments_paid_ordered, rates_gbp_ordered, left_on="created_at", right_on="date", direction="backward")."backward"
+all_in_eur = pd.merge_asof(payments_gbp, rates_gbp_ordered, on="created_at", direction="backward")
+print(all_in_eur["rate"].isna().sum()) 
