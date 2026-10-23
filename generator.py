@@ -6,19 +6,18 @@ SEED = 42
 COUNTRIES = ["LV", "DE", "GB", "FR"]
 COUNTRY_WEIGHTS = [0.2, 0.3, 0.3, 0.2]
 MERCHANT_CATEGORIES = ["gym", "saas", "utilities", "insurance", "media", "telecom"]
-MAX_MANDATES = 4
+MAX_MANDATES = 3
 END_DATE = pd.Timestamp("2026-10-15")
-MANDATE_STATUS_WEIGHT = [0.1, 0.9]
-MANDATE_STATUSES = ["acive", "cancelled"]
+MANDATE_STATUS_WEIGHT = [0.9, 0.1]
+MANDATE_STATUSES = ["active", "cancelled"]
 
 
 def generate_merchants(n: int, rng: np.random.Generator, fake: Faker) -> pd.DataFrame:
-    categories = ["gym", "saas", "utilities", "insurance", "media", "telecom"]
     return pd.DataFrame(
         {
             "merchant_id": [f"MER{i:05d}" for i in range(1, n + 1)],
             "name": [fake.company() for _ in range(n)],
-            "category": rng.choice(categories, size=n),
+            "category": rng.choice(MERCHANT_CATEGORIES, size=n),
             "country": rng.choice(COUNTRIES, size=n, p=COUNTRY_WEIGHTS),
         }
     )
@@ -57,7 +56,7 @@ def generate_mandates(
 ) -> pd.DataFrame:
 
     n_per_customer = rng.integers(
-        1, MAX_MANDATES, size=len(customers)
+        1, MAX_MANDATES+1, size=len(customers)
     )  # 1, 2 or MAX_MANDATES mandates per customer
     m = customers.loc[customers.index.repeat(n_per_customer)].reset_index(drop=True)
     m = m.rename(columns={"created_at": "customer_created_at"})  # rename column
@@ -77,17 +76,13 @@ def generate_mandates(
 
     m["status"] = rng.choice(MANDATE_STATUSES, size=n, p=MANDATE_STATUS_WEIGHT)
 
-    is_cancelled = m["status"] == "cancelled"
-
     random_days = pd.to_timedelta(rng.integers(30, 300, size=n), unit="D")
-    cancelled_date = (m["created_at"] + random_days).clip(upper=END_DATE)
-    m["cancelled_at"] = np.where(is_cancelled, cancelled_date, np.datetime64("NaT"))
+    cancelled_date = m["created_at"] + random_days
 
-    # max_cancellation_date condition
-    cancelled_aftere_max_date = m["cancelled_at"] > END_DATE
+    is_cancelled = (m["status"] == "cancelled") & (cancelled_date <= END_DATE)
 
-    m["status"] = np.where(cancelled_aftere_max_date, "active", m["status"])
-    m["cancelled_at"] = np.where(cancelled_aftere_max_date, np.datetime64("NaT"), m["cancelled_at"])
+    m["cancelled_at"] = cancelled_date.where(is_cancelled)
+    m["status"] = np.where(is_cancelled, "cancelled", "active")
 
     return m[
         [
