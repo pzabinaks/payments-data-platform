@@ -57,9 +57,11 @@ def generate_mandates(
     m = customers.loc[customers.index.repeat(n_per_customer)].reset_index(drop=True)
     m = m.rename(columns={"created_at": "customer_created_at"})  # rename column
 
+    m["merchant_id"] = rng.choice(merchants["merchant_id"], size=len(m))
+    m = m.drop_duplicates(subset=["customer_id", "merchant_id"]).reset_index(drop=True)
+
     n = len(m)
     m["mandate_id"] = [f"MD{i:07d}" for i in range(1, n + 1)]
-    m["merchant_id"] = rng.choice(merchants["merchant_id"], size=n)
 
     is_gb = m["country"] == "GB"
     m["scheme"] = np.where(
@@ -118,7 +120,9 @@ def generate_payments(
     ).dt.to_timestamp() + pd.to_timedelta(p["charge_day"] - 1, unit="D")
 
     last_date_of_that_row = p["cancelled_at"].fillna(END_DATE)
-    p = p[(p["charge_date"] >= p["created_at"]) & (p["charge_date"] <= last_date_of_that_row)]
+    p = p[
+        (p["charge_date"] >= p["created_at"]) & (p["charge_date"] <= last_date_of_that_row)
+    ].reset_index(drop=True)
     n_payments = len(p)
 
     p["payment_id"] = [f"PAY{i:07d}" for i in range(1, n_payments + 1)]
