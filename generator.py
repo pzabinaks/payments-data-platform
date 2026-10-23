@@ -119,14 +119,27 @@ def generate_payments(
 
     last_date_of_that_row = p["cancelled_at"].fillna(END_DATE)
     p = p[(p["charge_date"] >= p["created_at"]) & (p["charge_date"] <= last_date_of_that_row)]
+    n_payments = len(p)
 
-    p["payment_id"] = [f"PAY{i:07d}" for i in range(1, n + 1)]
+    p["payment_id"] = [f"PAY{i:07d}" for i in range(1, n_payments + 1)]
 
-    p["status"] = rng.choice(PAYMENT_STATUSES, size=n, p=PAYMENT_STATUS_WEIGHT)
+    p["status"] = rng.choice(PAYMENT_STATUSES, size=n_payments, p=PAYMENT_STATUS_WEIGHT)
 
-    failure_reason = rng.choice(PAYM_FAILURE_REASONS, size=n, p=PAYM_FAILURE_REASON_WEIGHT)
+    failure_reason = rng.choice(PAYM_FAILURE_REASONS, size=n_payments, p=PAYM_FAILURE_REASON_WEIGHT)
     status_failed = p["status"] == "failed"
-    p["failure_reason"] = failure_reason.where(status_failed)
+    p["failure_reason"] = np.where(status_failed, failure_reason, None)
+
+    return p[
+        [
+            "payment_id",
+            "mandate_id",
+            "amount",
+            "currency",
+            "charge_date",
+            "status",
+            "failure_reason",
+        ]
+    ]
 
 
 # ----------------------------------------------------------------------------------------------
@@ -185,6 +198,6 @@ print(result["mandates"])
 print()
 
 
-print("-- payements  -----------------------------")
-print(result["payements"])
+print("-- payments  -----------------------------")
+print(result["payments"])
 print()
