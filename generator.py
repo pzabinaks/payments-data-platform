@@ -10,6 +10,15 @@ MAX_MANDATES = 3
 END_DATE = pd.Timestamp("2026-10-15")
 MANDATE_STATUS_WEIGHT = [0.9, 0.1]
 MANDATE_STATUSES = ["active", "cancelled"]
+PAYMENT_STATUS_WEIGHT = [0.08, 0.92]
+PAYMENT_STATUSES = ["failed", "paid_out"]
+PAYM_FAILURE_REASONS = [
+    "insufficient_funds",
+    "refer_to_payer",
+    "account_closed",
+    "mandate_cancelled",
+]
+PAYM_FAILURE_REASON_WEIGHT = [0.6, 0.2, 0.1, 0.1]
 
 
 def generate_merchants(n: int, rng: np.random.Generator, fake: Faker) -> pd.DataFrame:
@@ -36,19 +45,6 @@ def generate_customers(n: int, rng: np.random.Generator, fake: Faker) -> pd.Data
     )
 
 
-# generate_mandates(customers, merchants, rng): each customer gets 1–3 mandates with random merchants. Scheme follows the customer’s country: GB → bacs / GBP, otherwise sepa_core / EUR.
-# About 10% are cancelled, with a cancelled_at after created_at. A mandate can’t start before the customer exists.
-
-# "mandate_id"
-# "customer_id"
-# "merchant_id"
-# "scheme",
-# "currency",
-# "status",
-# "created_at",
-# "cancelled_at",
-
-
 def generate_mandates(
     customers: pd.DataFrame,
     merchants: pd.DataFrame,
@@ -56,7 +52,7 @@ def generate_mandates(
 ) -> pd.DataFrame:
 
     n_per_customer = rng.integers(
-        1, MAX_MANDATES+1, size=len(customers)
+        1, MAX_MANDATES + 1, size=len(customers)
     )  # 1, 2 or MAX_MANDATES mandates per customer
     m = customers.loc[customers.index.repeat(n_per_customer)].reset_index(drop=True)
     m = m.rename(columns={"created_at": "customer_created_at"})  # rename column
@@ -98,6 +94,44 @@ def generate_mandates(
     ]
 
 
+# payment_id, mandate_id, amount, currency, charge_date, status, failure_reason, retry_of_payment_id
+def generate_payments(
+    mandates: pd.DataFrame,
+    rng: np.random.Generator,
+) -> pd.DataFrame:
+
+    m = mandates[mandates["status"] != "failed"].copy()  # only if you added "failed"
+    n = len(m)
+    m["charge_day"] = rng.integers(1, 29, size=n)  # 1-28: every month has these days
+    m["amount"] = rng.choice([9.99, 19.99, 29.0, 49.5, 75.5, 120.0, 250.0], size=n)
+
+    last_date = m["cancelled_at"].fillna(END_DATE)  # NVL(cancelled_at, :end_date)
+    first_month = m["created_at"].dt.to_period("M")
+    last_month = last_date.dt.to_period("M")
+    m["n_payments"] = (last_month - first_month).apply(lambda x: x.n) + 1
+
+    p = m.loc[m.index.repeat(m["n_payments"])].reset_index(drop=True)
+    p["month_no"] = p.groupby("mandate_id").cumcount()  # 0, 1, 2, ... within each mandate
+
+    p["charge_date"] = (
+        p["created_at"].dt.to_period("M") + p["month_no"]
+    ).dt.to_timestamp() + pd.to_timedelta(p["charge_day"] - 1, unit="D")
+
+    last_date_of_that_row = p["cancelled_at"].fillna(END_DATE)
+    p = p[(p["charge_date"] >= p["created_at"]) & (p["charge_date"] <= last_date_of_that_row)]
+
+    p["payment_id"] = [f"PAY{i:07d}" for i in range(1, n + 1)]
+
+    p["status"] = rng.choice(PAYMENT_STATUSES, size=n, p=PAYMENT_STATUS_WEIGHT)
+
+    failure_reason = rng.choice(PAYM_FAILURE_REASONS, size=n, p=PAYM_FAILURE_REASON_WEIGHT)
+    status_failed = p["status"] == "failed"
+    p["failure_reason"] = failure_reason.where(status_failed)
+
+
+# ----------------------------------------------------------------------------------------------
+
+
 def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
     """Generate the whole domain, parents before children."""
     rng = np.random.default_rng(SEED)
@@ -124,16 +158,33 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
 
     assert (mandates.loc[mandates["currency"] == "GBP", "scheme"] == "bacs").all()
 
-    # payments = generate_payments(mandates, rng)          # later
+    payments = generate_payments(mandates, rng)  # later
     # events = generate_events(payments, rng)              # later
 
     return {
         "merchants": merchants,
         "customers": customers,
         "mandates": mandates,
-        # "payments": payments,
+        "payments": payments,
         # "events": events,
     }
 
 
-result = generate_all(10, 5)
+result = generate_all(5, 3)
+print("-- merchants  -----------------------------")
+print(result["merchants"])
+print()
+
+print("-- Customers  -----------------------------")
+print(result["customers"])
+print()
+
+
+print("-- mandates  -----------------------------")
+print(result["mandates"])
+print()
+
+
+print("-- payements  -----------------------------")
+print(result["payements"])
+print()
