@@ -146,6 +146,50 @@ def generate_payments(
     ]
 
 
+# event_id,payment_id,status,event_at
+def generate_events(payments: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
+    p = payments
+    is_failed = p["status"] == "failed"
+
+    def random_days(lo: int, hi: int, size: int) -> pd.Series:
+        """A random number of days between lo and hi (inclusive) for each of `size` rows."""
+        return pd.to_timedelta(rng.integers(lo, hi + 1, size=size), unit="D")
+
+    ok = p[~is_failed]
+    bad = p[is_failed]
+
+    def make_events(rows: pd.DataFrame, status: str, event_at: pd.Series) -> pd.DataFrame:
+        """One event per row in `rows`: same columns for every status."""
+        return pd.DataFrame(
+            {
+                "payment_id": rows["payment_id"],
+                "status": status,
+                "event_at": event_at,
+            }
+        )
+
+    pending = make_events(p, "pending_submission", p["charge_date"] - pd.Timedelta(days=5))
+    submitted = make_events(p, "submitted", p["charge_date"] - pd.Timedelta(days=2))
+    confirmed = make_events(ok, "confirmed", ok["charge_date"])
+    paid_out = make_events(ok, "paid_out", ok["charge_date"] + random_days(1, 2, len(ok)))
+    failed = make_events(bad, "failed", bad["charge_date"] + random_days(1, 4, len(bad)))
+
+    events = pd.concat([pending, submitted, confirmed, paid_out, failed], ignore_index=True)
+    events = events.sort_values(["payment_id", "event_at"]).reset_index(drop=True)
+    events["event_id"] = [f"EV{i:07d}" for i in range(1, len(events) + 1)]
+
+    events = events[events["event_at"] <= END_DATE]
+
+    return events[
+        [
+            "event_id",
+            "payment_id",
+            "status",
+            "event_at",
+        ]
+    ]
+
+
 # ----------------------------------------------------------------------------------------------
 
 
@@ -176,32 +220,45 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
     assert (mandates.loc[mandates["currency"] == "GBP", "scheme"] == "bacs").all()
 
     payments = generate_payments(mandates, rng)  # later
-    # events = generate_events(payments, rng)              # later
+    events = generate_events(payments, rng)  # later
+    latest = events.sort_values("event_at").groupby("payment_id")["status"].last()
+    payments["status"] = payments["payment_id"].map(latest)
+
+    payments.loc[payments["status"] != "failed", "failure_reason"] = None
+
+    assert payments["mandate_id"].isin(mandates["mandate_id"]).all(), (
+        "payments with unknown mandate_id!"
+    )
+
+    check_pm_mand = payments.merge(mandates, on="mandate_id", how="inner")[
+        ["payment_id", "charge_date", "mandate_id", "created_at", "cancelled_at"]
+    ]
+
+    assert (check_pm_mand["charge_date"] >= check_pm_mand["created_at"]).all(), (
+        "Charged before mandate created!"
+    )
+
+    assert (
+        (check_pm_mand["charge_date"]
+        < check_pm_mand["cancelled_at"]) & (check_pm_mand["charge_date"]
+        < END_DATE)
+    ).all(), "Charged after cancelled!"
 
     return {
         "merchants": merchants,
         "customers": customers,
         "mandates": mandates,
         "payments": payments,
-        # "events": events,
+        "events": events,
     }
 
 
-result = generate_all(5, 3)
-print("-- merchants  -----------------------------")
-print(result["merchants"])
-print()
+# ---------------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+    result = generate_all(5, 3)
+    for name, table in result.items():
+        print(f"-- {name} " + "-" * 30)
+        print(table)
+        print()
 
-print("-- Customers  -----------------------------")
-print(result["customers"])
-print()
-
-
-print("-- mandates  -----------------------------")
-print(result["mandates"])
-print()
-
-
-print("-- payments  -----------------------------")
-print(result["payments"])
-print()
+    print(result["payments"]["status"].value_counts())
