@@ -178,6 +178,9 @@ def generate_events(payments: pd.DataFrame, rng: np.random.Generator) -> pd.Data
     events = events.sort_values(["payment_id", "event_at"]).reset_index(drop=True)
     events["event_id"] = [f"EV{i:07d}" for i in range(1, len(events) + 1)]
 
+    events = events[events["event_at"] <= END_DATE]
+
+
     return events[
         [
             "event_id",
@@ -219,6 +222,8 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
 
     payments = generate_payments(mandates, rng)  # later
     events = generate_events(payments, rng)  # later
+    latest = events.sort_values("event_at").groupby("payment_id")["status"].last()
+    payments["status"] = payments["payment_id"].map(latest)
 
     return {
         "merchants": merchants,
@@ -236,3 +241,7 @@ if __name__ == "__main__":
         print(f"-- {name} " + "-" * 30)
         print(table)
         print()
+    
+    print(result["payments"]["status"].value_counts())
+    
+     
