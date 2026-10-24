@@ -238,12 +238,16 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
         "Charged before mandate created!"
     )
 
-    assert (
-        (check_pm_mand["charge_date"]
-        < check_pm_mand["cancelled_at"]) & (check_pm_mand["charge_date"]
-        < END_DATE)
-    ).all(), "Charged after cancelled!"
+    last_allowed = check_pm_mand["cancelled_at"].fillna(END_DATE)
 
+    assert (check_pm_mand["charge_date"] <= last_allowed).all(), (
+        "payment charged after mandate cancellation or END_DATE!"
+    )
+
+    assert (payments["failure_reason"].isna() & payments["status"] != "failed").all()
+
+    assert (events["event_at"] <= END_DATE).all()
+    
     return {
         "merchants": merchants,
         "customers": customers,
