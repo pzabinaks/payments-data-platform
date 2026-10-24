@@ -178,6 +178,15 @@ def generate_events(payments: pd.DataFrame, rng: np.random.Generator) -> pd.Data
     events = events.sort_values(["payment_id", "event_at"]).reset_index(drop=True)
     events["event_id"] = [f"EV{i:07d}" for i in range(1, len(events) + 1)]
 
+    return events[
+        [
+            "event_id",
+            "payment_id",
+            "status",
+            "event_at",
+        ]
+    ]
+
 
 # ----------------------------------------------------------------------------------------------
 
