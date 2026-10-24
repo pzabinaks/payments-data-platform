@@ -284,7 +284,7 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
 
 # ---------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    result = generate_all(300000, 500)
+    result = generate_all(42000, 500)
     # for name, table in result.items():
     #     print(f"-- {name} " + "-" * 30)
     #     print(table)
