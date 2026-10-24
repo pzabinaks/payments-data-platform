@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from faker import Faker
+from pathlib import Path
 
 SEED = 42
 COUNTRIES = ["LV", "DE", "GB", "FR"]
@@ -19,6 +20,14 @@ PAYM_FAILURE_REASONS = [
     "mandate_cancelled",
 ]
 PAYM_FAILURE_REASON_WEIGHT = [0.6, 0.2, 0.1, 0.1]
+STATUS_ORDER = {
+    "pending_submission": 1,
+    "submitted": 2,
+    "confirmed": 3,
+    "paid_out": 4,
+    "failed": 4,
+    "charged_back": 5,
+}
 
 
 def generate_merchants(n: int, rng: np.random.Generator, fake: Faker) -> pd.DataFrame:
@@ -244,10 +253,26 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
         "payment charged after mandate cancellation or END_DATE!"
     )
 
-    assert (payments["failure_reason"].isna() & payments["status"] != "failed").all()
+    has_reason = payments["failure_reason"].notna()
+    is_failed = payments["status"] == "failed"
+    assert (has_reason == is_failed).all(), (
+        "failure_reason must be filled exactly when status is failed!"
+    )
+
+    assert events["payment_id"].isin(payments["payment_id"]).all(), (
+        "events with unknown payment_id!"
+    )
 
     assert (events["event_at"] <= END_DATE).all()
-    
+
+    ev = events.sort_values("event_id")
+    time_ok = ev.groupby("payment_id")["event_at"].diff().dropna() >= pd.Timedelta(0)
+    assert time_ok.all(), "event times go backwards within a payment!"
+
+    ev["step"] = ev["status"].map(STATUS_ORDER)
+    step_ok = ev.groupby("payment_id")["step"].diff().dropna() > 0
+    assert step_ok.all(), "events out of business order!"
+
     return {
         "merchants": merchants,
         "customers": customers,
@@ -259,10 +284,16 @@ def generate_all(n_customers: int, n_merchants: int) -> dict[str, pd.DataFrame]:
 
 # ---------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
-    result = generate_all(5, 3)
-    for name, table in result.items():
-        print(f"-- {name} " + "-" * 30)
-        print(table)
-        print()
+    result = generate_all(300000, 500)
+    # for name, table in result.items():
+    #     print(f"-- {name} " + "-" * 30)
+    #     print(table)
+    #     print()
 
-    print(result["payments"]["status"].value_counts())
+    # print(result["payments"]["status"].value_counts())
+
+    out = Path("data/raw/domain")
+    out.mkdir(parents=True, exist_ok=True)
+    for name, table in result.items():
+        table.to_parquet(out / f"{name}.parquet", index=False)
+        print(f"{name:10} {len(table):>10,} rows")
