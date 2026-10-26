@@ -9,7 +9,7 @@ Fact tables:
 
 
 ## Fact tables
-        fct_payments(pament_id_sk bigint  -- surrogate key for payment
+        fct_payments(payment_id_sk bigint  -- surrogate key for payment
                     ,payment_id text  --payment_id from payements
                     ,charge_date_sk integer   -- FK to dim_date
                     ,customer_sk  integer     -- FK to dim_customer
