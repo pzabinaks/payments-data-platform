@@ -1,7 +1,6 @@
 Business process: payment handling
 
 Fact tables:
-    First fact table would be payemnts itself, second payment_events(transacitons?)
     fct_payments: “One row per payment, updated as the payment reaches each milestone.”
     fct_payment_transactions: “One row per payment status change.”
 
@@ -44,7 +43,6 @@ Fact tables:
                                 );
 
 ## Dimensions
-Dimensions:
     dim_date (date_sk integer     -- surrogate key / format YYYYMMDD
              ,date  DATE  -- real
              ,month  integer      -- month of the year
@@ -79,18 +77,95 @@ Dimensions:
                );
 
 
+## Business questions
+    1 Failure rate by merchant category and month
+        SUM(is_failed)::numeric / COUNT(*) GROUP BY dim_merchant.category, dim_date.year, dim_date.month
 
---1 Failure rate by merchant category and month
-  -- SUM(is_failed)::numeric / COUNT(*) GROUP BY dim_merchant.category, dim_date.year, dim_date.month
+    2 Total collected in EUR by scheme (SEPA vs Bacs) per quarter
+        sum(fct_payments.amount_eur) GROUP BY dim_mandate.scheme, dim_date.year,dim_date.quarter
 
---2 Total collected in EUR by scheme (SEPA vs Bacs) per quarter
-  -- sum(fct_payments.amount_eur) GROUP BY dim_mandate.scheme, dim_date.year,dim_date.quarter
+    3 Average number of days from submission to payout, by scheme
+        avg (fct_payments.days_to_payout) GROUP BY dim_mandate.scheme
 
---3 Average number of days from submission to payout, by scheme
-  -- avg (fct_payments.days_to_payout) GROUP BY dim_mandate.scheme
+    4 Top failure reasons for customers in Germany
+        where dim_customer.country = 'DE' group by fct_payments.failure_reason ORDER BY COUNT(*) DESC
 
---4 Top failure reasons for customers in Germany
-  -- where dim_customer.country = 'DE' group by fct_payments.failure_reason ORDER BY COUNT(*) DESC
+    5 How many payments were charged back, and how long after payout?
+        fct_payments.days_to_charge_back where fct_payments.is_charged_back
 
---5 How many payments were charged back, and how long after payout?
-  --   fct_payments.days_to_charge_back where fct_payments.is_charged_back
+
+
+## Diagram
+
+```mermaid
+erDiagram
+    DIM_DATE     ||--o{ FCT_PAYMENTS : "charge / submitted / confirmed / paid_out / failed / charged_back date"
+    DIM_CUSTOMER ||--o{ FCT_PAYMENTS : "customer_sk"
+    DIM_MERCHANT ||--o{ FCT_PAYMENTS : "merchant_sk"
+    DIM_MANDATE  ||--o{ FCT_PAYMENTS : "mandate_sk"
+    FCT_PAYMENTS ||--o{ FCT_PAYMENT_TRANSACTIONS : "payment_sk"
+    DIM_DATE     ||--o{ FCT_PAYMENT_TRANSACTIONS : "event_date_sk"
+
+    FCT_PAYMENTS {
+        bigint  payment_sk PK
+        text    payment_id "degenerate dimension"
+        integer customer_sk FK
+        integer merchant_sk FK
+        integer mandate_sk FK
+        integer charge_date_sk FK
+        integer submitted_date_sk FK
+        integer confirmed_date_sk FK
+        integer paid_out_date_sk FK
+        integer failed_date_sk FK
+        integer charged_back_date_sk FK
+        text    status
+        text    failure_reason
+        text    currency
+        numeric amount
+        numeric amount_eur
+        integer is_failed "0/1 additive"
+        integer is_charged_back "0/1 additive"
+        integer days_to_payout "lag fact"
+        integer days_to_charge_back "lag fact"
+    }
+    FCT_PAYMENT_TRANSACTIONS {
+        bigint    payment_trx_sk PK
+        text      event_id
+        bigint    payment_sk FK
+        integer   event_date_sk FK
+        timestamp event_at
+        text      status
+    }
+    DIM_DATE {
+        integer date_sk PK "YYYYMMDD"
+        date    date
+        integer year
+        integer quarter
+        integer month
+        integer day_of_week
+        integer is_weekend "flag 0/1"
+    }
+    DIM_CUSTOMER {
+        integer customer_sk PK
+        text    customer_id
+        text    name "PII"
+        text    email "PII"
+        text    country
+    }
+    DIM_MERCHANT {
+        integer merchant_sk PK
+        text    merchant_id
+        text    name
+        text    category
+        text    country
+    }
+    DIM_MANDATE {
+        integer mandate_sk PK
+        text    mandate_id
+        text    scheme
+        text    currency
+        text    status
+        date    created_at
+        date    cancelled_at
+    }
+```  
