@@ -7,7 +7,7 @@ from urllib3.util.retry import Retry          # urllib3 is installed automatical
 
 
 BASE_URL = "https://api.frankfurter.dev/v2/rates"
-START, END = "2026-01-01", "2026-10-15"
+START, END = "2024-12-15", "2026-10-15"
 def fetch_rates_old(start, end, quotes,providers):
     """Fetch daily EUR exchange rates between start and end (YYYY-MM-DD)."""
     r = requests.get(BASE_URL,
