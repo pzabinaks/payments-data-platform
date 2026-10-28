@@ -114,5 +114,6 @@ left join lateral
   from fx_rates rates
    where  stg_pay.currency = rates.quote and rates.rate_date <= stg_pay.charge_date::date
    ORDER BY rates.rate_date DESC LIMIT 1
-  )r ON true;
+  )r ON true
+  ORDER BY stg_pay.payment_id;
 --limit 10;

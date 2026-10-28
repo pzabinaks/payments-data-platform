@@ -18,6 +18,7 @@ CREATE TABLE fct_payment_transactions (paym_trx_sk bigint GENERATED ALWAYS AS ID
 insert into fct_payment_transactions (event_id
                                       ,payment_id_sk
                                       ,transaction_date_sk
+                                      ,event_at
                                       ,status
                                       ,customer_sk
                                       ,merchant_sk
@@ -26,10 +27,11 @@ insert into fct_payment_transactions (event_id
 SELECT event_id
       ,fct_pay.payment_id_sk
       ,dim_dat.date_sk
+      ,stg_eve.event_at
       ,stg_eve.status
-      ,customer_sk
-      ,merchant_sk
-      ,mandate_sk
+      ,fct_pay.customer_sk
+      ,fct_pay.merchant_sk
+      ,fct_pay.mandate_sk
 from stg_events stg_eve
 left join fct_payments fct_pay
   on (stg_eve.payment_id = fct_pay.payment_id)
