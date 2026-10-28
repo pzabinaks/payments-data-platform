@@ -34,7 +34,7 @@ Fact tables:
         fct_payment_transactions (paym_trx_sk bigint --rurrogate key for payment_events/transacions    
                                  ,event_id text -- id from payemnt_events
                                  ,payment_id_sk  bigint --FK to payments
-                                 ,event_at_sk  integer    --FK to dim_date
+                                 ,transaction_date_sk  integer    --FK to dim_date original event_at
                                  ,status varchar   -- Degenerate Dimension status
                                  ,customer_sk  integer     -- FK to dim_customer
                                  ,merchant_sk  integer     -- FK to dim_merchant

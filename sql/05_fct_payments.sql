@@ -61,8 +61,8 @@ select stg_pay.payment_id
       ,stg_pay.amount as amount 
       ,stg_pay.status as status
       ,stg_pay.failure_reason as failure_reason
-      ,case when stg_pay.status='failed' then 1 else 0 end as is_failed
-      ,case when stg_pay.status='charged_back' then 1 else 0 end as is_charged_back
+      ,case when stg_dim_dates.failed_dt is not null then 1 else 0 end as is_failed
+      ,case when stg_dim_dates.charged_back_dt is not null then 1 else 0 end as is_charged_back
       ,stg_dim_dates.paid_out_dt - stg_dim_dates.submitted_dt as  days_to_payout
       ,stg_dim_dates.charged_back_dt - stg_dim_dates.paid_out_dt as days_to_charge_back
       ,stg_pay.currency
@@ -87,6 +87,7 @@ from stg_payments as stg_pay
              ,stg_eve.paid_out_dt
              ,stg_eve.charged_back_dt
              ,stg_eve.submitted_dt
+             ,stg_eve.failed_dt
          from (select payment_id
                       ,min(case when status = 'confirmed' then event_at end)::date as confirmed_dt
                       ,min(case when status = 'failed' then event_at end)::date as failed_dt
