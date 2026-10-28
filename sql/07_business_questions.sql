@@ -19,9 +19,9 @@
      on fct_pay.mandate_sk = dim_man.mandate_sk
    join dim_date dim_dat
      on fct_pay.charge_date_sk = dim_dat.date_sk
-  where fct_pay.currency='EUR'
+   where fct_pay.is_failed =0
     GROUP BY dim_man.scheme, dim_dat.year,dim_dat.quarter
-ORDER BY (scheme, year, quarter);
+ORDER BY scheme, year, quarter;
 
     -- 3 Average number of days from submission to payout, by scheme
     --     avg (fct_payments.days_to_payout) GROUP BY dim_mandate.scheme
@@ -48,6 +48,6 @@ ORDER BY (scheme, year, quarter);
 
     -- 5 How many payments were charged back, and how long after payout?
     --     fct_payments.days_to_charge_back where fct_payments.is_charged_back
-select count(*) as overall_days,avg(days_to_charge_back) avg_days_to_charge_back,min(days_to_charge_back) min_days_to_charge_back,max(days_to_charge_back) max_days_to_charge_back 
+select count(*) as charged_back_count,round(avg(days_to_charge_back),1) avg_days_to_charge_back,min(days_to_charge_back) min_days_to_charge_back,max(days_to_charge_back) max_days_to_charge_back 
 from fct_payments fct_pay
 where fct_pay.is_charged_back = 1;
