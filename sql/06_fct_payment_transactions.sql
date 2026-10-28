@@ -7,6 +7,7 @@ CREATE TABLE fct_payment_transactions (paym_trx_sk bigint GENERATED ALWAYS AS ID
                                       ,event_id text NOT NULL UNIQUE   -- id from payemnt_events
                                       ,payment_id_sk  bigint           --FK to payments
                                       ,transaction_date_sk  integer    --FK to dim_date
+                                      ,event_at timestamp
                                       ,status varchar NOT NULL         -- Degenerate Dimension status
                                       ,customer_sk  integer            -- FK to dim_customer
                                       ,merchant_sk  integer            -- FK to dim_merchant
