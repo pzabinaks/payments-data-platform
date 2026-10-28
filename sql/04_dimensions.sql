@@ -46,7 +46,7 @@ ORDER BY merchant_id;
 DROP TABLE IF EXISTS dim_mandate;
 
 
-CREATE TABLE dim_mandate(mandate_sk integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+CREATE TABLE dim_mandate(mandate_sk integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY
   ,mandate_id text NOT NULL UNIQUE
   ,scheme text ,currency text NOT NULL
   ,status text NOT NULL

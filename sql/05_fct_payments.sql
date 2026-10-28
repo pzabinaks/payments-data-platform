@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS fct_payments;
 
 CREATE TABLE fct_payments(
      payment_id_sk bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-    ,payment_id text  NOT NULL --payment_id from payements
+    ,payment_id text  NOT NULL UNIQUE --payment_id from payements
     ,charge_date_sk integer   -- FK to dim_date
     ,customer_sk  integer     -- FK to dim_customer
     ,merchant_sk  integer     -- FK to dim_merchant
@@ -66,7 +66,7 @@ select stg_pay.payment_id
       ,stg_dim_dates.paid_out_dt - stg_dim_dates.submitted_dt as  days_to_payout
       ,stg_dim_dates.charged_back_dt - stg_dim_dates.paid_out_dt as days_to_charge_back
       ,stg_pay.currency
-      ,round(stg_pay.amount / coalesce(r.rate,1),2) as  amount_eur 
+      ,round(stg_pay.amount / case when stg_pay.currency<>'EUR' then r.rate else 1 end ,2) as  amount_eur 
 from stg_payments as stg_pay
  join stg_mandates as stg_man
    on (stg_pay.mandate_id = stg_man.mandate_id)
@@ -78,21 +78,19 @@ from stg_payments as stg_pay
    on (dim_cus.customer_id  = stg_man.customer_id) 
  join dim_date dim_dat
    on (stg_pay.charge_date::date = dim_dat.calendar_date)
- join (select stg_eve.payment_id
+ left join (select stg_eve.payment_id
              ,conf_dt.date_sk as confirmed_dt_sk
              ,failed_dt.date_sk as failed_dt_sk
              ,paid_out_dt.date_sk as paid_out_dt_sk
-             ,pending_submission_dt.date_sk as pending_submission_dt_sk
              ,submitted_dt.date_sk as submitted_dt_sk
              ,charged_back_dt.date_sk as charged_back_dt_sk
-             ,paid_out_dt
-             ,charged_back_dt
-             ,submitted_dt
+             ,stg_eve.paid_out_dt
+             ,stg_eve.charged_back_dt
+             ,stg_eve.submitted_dt
          from (select payment_id
                       ,min(case when status = 'confirmed' then event_at end)::date as confirmed_dt
                       ,min(case when status = 'failed' then event_at end)::date as failed_dt
                       ,min(case when status = 'paid_out' then event_at end)::date as paid_out_dt
-                      ,min(case when status = 'pending_submission' then event_at end)::date as pending_submission_dt
                       ,min(case when status = 'submitted' then event_at end)::date as submitted_dt
                       ,min(case when status = 'charged_back' then event_at end)::date as charged_back_dt
                 from stg_events
@@ -104,8 +102,6 @@ from stg_payments as stg_pay
           on (stg_eve.failed_dt = failed_dt.calendar_date)
         left join dim_date as paid_out_dt
           on (stg_eve.paid_out_dt = paid_out_dt.calendar_date)  
-        left join dim_date as pending_submission_dt
-          on (stg_eve.pending_submission_dt = pending_submission_dt.calendar_date)  
         left join dim_date as submitted_dt
           on (stg_eve.submitted_dt = submitted_dt.calendar_date)
         left join dim_date as charged_back_dt
