@@ -182,8 +182,13 @@ def generate_events(payments: pd.DataFrame, rng: np.random.Generator) -> pd.Data
     confirmed = make_events(ok, "confirmed", ok["charge_date"])
     paid_out = make_events(ok, "paid_out", ok["charge_date"] + random_days(1, 2, len(ok)))
     failed = make_events(bad, "failed", bad["charge_date"] + random_days(1, 4, len(bad)))
+    
+    is_chargeback = rng.random(len(paid_out)) < 0.005
+    cb = paid_out[is_chargeback]
+    charged_back = make_events(cb, "charged_back", cb["event_at"] + random_days(10, 60, len(cb)),
+)
 
-    events = pd.concat([pending, submitted, confirmed, paid_out, failed], ignore_index=True)
+    events = pd.concat([pending, submitted, confirmed, paid_out, failed, charged_back], ignore_index=True)
     events = events.sort_values(["payment_id", "event_at"]).reset_index(drop=True)
     events["event_id"] = [f"EV{i:07d}" for i in range(1, len(events) + 1)]
 

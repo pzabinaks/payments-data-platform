@@ -44,12 +44,14 @@ Fact tables:
 
 ## Dimensions
     dim_date (date_sk integer     -- surrogate key / format YYYYMMDD
-             ,date  DATE  -- real
+             ,calendar_date  DATE  -- real
              ,month  integer      -- month of the year
              ,year   integer      -- year
              ,quarter integer     -- quarter of the year
              ,day_in_week integer -- day ina week
-             ,weekend_day   integer   -- flag: 0- false 1- true
+             ,is_weekend_day   integer   -- flag: 0- false 1- true
+             ,month_name varchar   --name of the month
+             ,year_month varchar   -- year and month in format YYYY-MM             
              );
     
     dim_customer (customer_sk integer       -- surrogate key 1,2,3...
