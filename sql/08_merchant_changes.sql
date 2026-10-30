@@ -25,3 +25,16 @@ INSERT INTO stg_merchants_2026_07 (merchant_id, name, category, country) VALUES
   ('MER00501', 'Baltic Fitness SIA', 'gym',  'LV'),
   ('MER00502', 'Nordlicht Media GmbH', 'media', 'DE'),
   ('MER00503', 'Thames Telecom Ltd', 'telecom', 'GB');
+
+-- 2026-10-01
+
+DROP TABLE IF EXISTS stg_merchants_2026_10;
+CREATE TABLE stg_merchants_2026_10 AS SELECT * FROM stg_merchants_2026_07;
+
+-- Type 2 change: 1 merchant change category again
+UPDATE stg_merchants_2026_10
+SET category = CASE category
+    WHEN 'gym' THEN 'media'      WHEN 'saas' THEN 'telecom'
+    WHEN 'utilities' THEN 'insurance' WHEN 'insurance' THEN 'utilities'
+    WHEN 'media' THEN 'gym'      WHEN 'telecom' THEN 'saas' END
+WHERE merchant_id = 'MER00001';
