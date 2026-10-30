@@ -1,3 +1,4 @@
+-- test harness: run step by step, ROLLBACK to undo
 begin;
   CALL p_apply_merchant_batch('stg_merchants_2026_07', to_date('2026-07-01','YYYY-MM-DD')); --check data after this step
   CALL p_apply_merchant_batch('stg_merchants_2026_10', to_date('2026-10-01','YYYY-MM-DD'));
@@ -64,3 +65,6 @@ WHERE (valid_to < next_valid_from or valid_to > next_valid_from);
 ---chek names--------------------------------------------------------------------------------------------
 SELECT d.merchant_id, d.name, s.name FROM dim_merchant_scd2 d
 JOIN stg_merchants_2026_07 s USING (merchant_id) WHERE d.name IS DISTINCT FROM s.name;
+
+
+SELECT * FROM dim_merchant_scd2 WHERE merchant_id = 'MER00001' ORDER BY valid_from;

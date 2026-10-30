@@ -5,7 +5,9 @@ CREATE OR REPLACE PROCEDURE p_apply_merchant_batch(
 ) 
 LANGUAGE plpgsql AS $$
 declare
-  v_sql text;
+  v_names_changed integer;
+  v_lines_updated integer;
+  v_lines_added   integer;
 BEGIN
     --1 handle Type1: name
 execute format(
@@ -24,7 +26,8 @@ execute format(
         $query$,
        p_src
     );
-
+  GET DIAGNOSTICS v_names_changed = ROW_COUNT;
+ 
 
    --2 handle Type2: country and category
     EXECUTE format(    
@@ -66,7 +69,7 @@ execute format(
     ,p_src
     ,p_src
     ) USING p_batch_date,to_date('9999-12-31','YYYY-MM-DD');
-
+   GET DIAGNOSTICS v_lines_updated = ROW_COUNT;
 
    
     --3 Add new merchants from batch
@@ -88,14 +91,17 @@ select stg_mer2.merchant_id
         ,$1
         ,$2
         ,True
-    from %I stg_mer2
+    from %s stg_mer2
  where not exists (select 1 from dim_merchant_scd2 dim_mer2 where dim_mer2.merchant_id = stg_mer2.merchant_id)
  $query$
  ,p_src
     )
    USING p_batch_date,to_date('9999-12-31','YYYY-MM-DD');
-    --RAISE NOTICE 'SQL: %', v_sql;  
-    --EXECUTE v_sql;
+ 
+  GET DIAGNOSTICS v_lines_added = ROW_COUNT;
+
+  -- “July: 5 names, 25 closed/new versions, 3 new merchants”
+  RAISE NOTICE '%: % names, % closed/new versions, % new merchant',to_char(p_batch_date, 'Month'),v_names_changed,v_lines_updated,v_lines_added;  
 
 END;
 $$;
