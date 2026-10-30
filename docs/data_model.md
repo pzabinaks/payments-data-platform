@@ -78,6 +78,16 @@ Fact tables:
                ,cancelled_at date
                );
 
+    dim_merchant_scd2(merchant_sk --surrogate 
+                     ,merchant_id text 
+                     ,name text 
+                     ,category text 
+                     ,country text 
+                    ,valid_from date  
+                    ,valid_to date 
+                    ,is_current boolean 
+                    );
+
 
 ## Business questions
     1 Failure rate by merchant category and month
