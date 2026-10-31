@@ -1,24 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
+set -a; source .env; set +a
+
+
+cd "$(dirname "$(readlink -f "$0")")/.."
+echo "Working directory: $(pwd)"
 
 # Load environment variables from .env file if it exists
 if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
+    set -a; source .env; set +a;
 fi
 
 DB_USER="${POSTGRES_USER:-postgres}"
-DB_NAME="${POSTGRES_DB:-postgres}"
+DB_NAME="${POSTGRES_DB:-payments}"
 
 # Define the array of SQL script names in execution order
 SQL_SCRIPTS=(
-    "03_dim_date.sql"
-    "04_dimensions.sql"
-    "05_fct_payments.sql"
-    "06_fct_payment_transactions.sql"   
-    "09_dim_merchant_scd2.sql" 
-    "08_merchant_changes.sql"
-    "10_p_apply_merchant_batch.sql"
-    "11_apply_merchant_batch.sql"
+    "03_dim_date.sql"                     # create date dimention table
+    "04_dimensions.sql"                   # rest of the dimention tables
+    "05_fct_payments.sql"                 # creaete payment fact tables
+    "06_fct_payment_transactions.sql"     # payment transaction fact table
+    "09_dim_merchant_scd2.sql"            # create scd for dim_merchant
+    "08_merchant_changes.sql"             # create merchant stg change tables
+    "10_p_apply_merchant_batch.sql"       # create procedure to hanlde merchant scd
+    "11_apply_merchant_batch.sql"         # apply merchant changes and handle scd
 )
 SCRIPT_DIR="sql"
 
@@ -26,21 +31,11 @@ SCRIPT_DIR="sql"
 docker compose exec -T pgdatabase psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" < "sql/01_create_tables.sql"
 
 # 2 -------  Python scripts --------------------------------------------------------------------------
+echo "PG_DSN for Python: $PG_DSN"
 uv run python -m payments_data_platform.load_staging;  # create/load  staging tables
-uv run python -m practice/day08_fx.py;  #  fix rates
+uv run python practice/day08_fx.py;  #  fix rates
 
 # 3 -------  SQL part --------------------------------------------------------------------------
-# Loop through each script in the array and execute it
-    # "03_dim_date.sql"                        --- create date dimention table
-    # "04_dimensions.sql"                      -- rest of the dimention tables
-    # "05_fct_payments.sql"                    -- creaete payment fact tables
-    # "06_fct_payment_transactions.sql"        -- payment transaction fact table
-    # "09_dim_merchant_scd2.sql"               -- create scd for dim_merchant
-    # "08_merchant_changes.sql"                -- create merchant stg change tables
-    # "10_p_apply_merchant_batch.sql"          -- create procedure to hanlde merchant scd
-    # "11_apply_merchant_batch.sql"            -- apply merchant changes and handle scd
-
-
 for script in "${SQL_SCRIPTS[@]}"; do
     # Combine the directory and file name into a full path
     full_path="${SCRIPT_DIR}/${script}"

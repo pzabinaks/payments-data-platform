@@ -62,7 +62,7 @@ save_raw(rates, START, END)
 
 
 # connection settings: never hard-code passwords in code that goes to GitHub
-DSN = os.environ.get("PG_DSN")
+DSN = os.environ["PG_DSN"]
 
 f"fx_rates_{START}_{END}.json"
 with psycopg.connect(DSN) as conn:
