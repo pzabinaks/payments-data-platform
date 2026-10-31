@@ -5,7 +5,7 @@ import psycopg
 import json
 
 # connection settings: never hard-code passwords in code that goes to GitHub
-DSN = os.environ.get("PG_DSN", "postgresql://postgres:devpass@localhost:5432/payments")
+DSN = os.environ.get("PG_DSN")
 
 df = pd.read_parquet("data/clean/payments.parquet")
 rows = list(df.itertuples(index=False, name=None))   # DataFrame -> list of tuples

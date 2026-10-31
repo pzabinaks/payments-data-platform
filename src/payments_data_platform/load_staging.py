@@ -10,7 +10,7 @@ import psycopg
 
 logger = logging.getLogger(__name__)
 
-DSN = os.environ.get("PG_DSN", "postgresql://postgres:devpass@localhost:5432/payments")
+DSN = os.environ.get("PG_DSN")
 DOMAIN_DIR = Path("data/raw/domain")
 
 
