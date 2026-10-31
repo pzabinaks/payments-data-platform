@@ -101,9 +101,9 @@ uv run ruff check src tests
 uv run payments-data-platform
 
 # start PostgreSQL and create the tables
-docker run -d --name pg -e POSTGRES_PASSWORD=devpass -e POSTGRES_DB=payments \
-  -p 5432:5432 -v pgdata:/var/lib/postgresql/data postgres:17
-docker exec -i pg psql -U postgres -d payments < sql/01_create_tables.sql
+cp .env.example .env        # then set your own passwords
+   docker compose up -d --wait
+   ./scripts/build_warehouse.sh
 
 # fetch ECB rates, then load payments and rates into PostgreSQL
 uv run python practice/day03.py
@@ -126,8 +126,8 @@ pytest · ruff · uv · Git
 
 - [x] Python foundations: files, APIs, PostgreSQL, tests, linting, logging
 - [x] SQL → pandas translations (aggregates, window functions, as-of joins)
-- [ ] Payments domain generator (mandates, failures, retries, late-arriving updates)
-- [ ] Dimensional model: star schema, slowly changing dimensions (SCD2)
+- [x] Payments domain generator (mandates, failures, retries, late-arriving updates)
+- [x] Dimensional model: star schema, slowly changing dimensions (SCD2)
 - [ ] Google Cloud: Cloud Storage, BigQuery (partitioning, clustering), Terraform
 - [ ] dbt: staging and mart models with tests and documentation
 - [ ] Airflow: scheduled, idempotent pipeline with backfills

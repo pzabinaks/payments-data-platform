@@ -31,7 +31,7 @@ SCRIPT_DIR="sql"
 docker compose exec -T pgdatabase psql -v ON_ERROR_STOP=1 -U "$DB_USER" -d "$DB_NAME" < "sql/01_create_tables.sql"
 
 # 2 -------  Python scripts --------------------------------------------------------------------------
-echo "PG_DSN for Python: $PG_DSN"
+#echo "PG_DSN for Python: $PG_DSN"
 uv run python -m payments_data_platform.load_staging;  # create/load  staging tables
 uv run python practice/day08_fx.py;  #  fix rates
 
