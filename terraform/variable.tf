@@ -12,3 +12,9 @@ variable "location" {
   type        = string
   description = "Location"
 }
+
+
+variable "loader_sa_email" {
+  type        = string
+  description = "Loader email"
+}
