@@ -26,7 +26,7 @@ resource "google_storage_bucket" "my_bucket" {
   uniform_bucket_level_access = true
 }
 
-# 2. Grant Read Rights using an IAM Member resource
+# 3. Grant Read Rights using an IAM Member resource
 resource "google_storage_bucket_iam_member" "pdp_loader_read" {
 
   bucket = google_storage_bucket.my_bucket.name
@@ -45,7 +45,7 @@ resource "google_bigquery_dataset" "raw" {
 }
 
 
-# 3. Grant BigQuery Data Editor Rights to pdp-loader
+# 4. Grant BigQuery Data Editor Rights to pdp-loader
 resource "google_bigquery_dataset_iam_member" "pdp_loader_editor" {
   # References the local name of your dataset resource
   dataset_id = google_bigquery_dataset.raw.dataset_id

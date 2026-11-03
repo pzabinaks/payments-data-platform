@@ -1,5 +1,5 @@
 output "gcs_bucket_name" {
-  value       = google_storage_bucket.my_bucket
+  value       = google_storage_bucket.my_bucket.name
   description = "The globally unique name of the created Cloud Storage bucket."
 }
 
