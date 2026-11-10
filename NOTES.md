@@ -24,4 +24,16 @@ Oracle Database Sharding          | Cloud Spanner                             | 
 Oracle PL/SQL                     | Stored Procedures (PostgreSQL / BigQuery) | Rewritten using standard PL/pgSQL (for AlloyDB/Cloud SQL) or BigQuery SQL.
 Oracle Data Warehouse (ADW)       | BigQuery                                  | BigQuery is completely serverless and separates compute from storage natively, eliminating database tuning or indexing.
 
+
+BigQuery
+
 Data type for amount FLOAT after loading to bigquery!
+
+External tables (still a files in Cloud storage) only for rare selection as much slower.
+Native tables for regular access (keeps statisticts), much faster.
+
+Need to remember that LIMIT X does not save reading all the table!
+
+In Bq NEVER select * and give particular column names used only!
+
+Checked impersionationg  pdp-loader that load_bigquery.sh execution does the same for another service accounts!

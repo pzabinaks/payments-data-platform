@@ -1,0 +1,1 @@
+CREATE EXTERNAL TABLE raw.ext_payments OPTIONS (format = 'PARQUET', uris = ['gs://payments-data-platform-pz01126-raw/domain/payments.parquet'])
