@@ -48,8 +48,10 @@ Reasonable size of partition is important!
 
 Using partitioned column in query is critical!
 
+When a table is clustered in BigQuery, the table data is automatically organized based on the contents of one or more columns in the table's schema. 
+When data is written to a clustered table, BigQuery sorts the data using the values in the clustering columns.
 
-Partition similar to Oracle, Clustering is the instrumentation for performance like oracle create index.
+In BigQuery you avoid full scans mainly by selecting only the columns you need, partitioning by date, and clustering by the columns you filter on most; for point lookups on huge tables there are search indexes.
 
 
 Important to set require_partition_filter = TRUE to avoid unnecessary high resource demanding queries on partitioned tables.

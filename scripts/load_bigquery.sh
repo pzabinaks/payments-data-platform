@@ -1,4 +1,4 @@
-#!/usr/bin/env
+#!/usr/bin/env bash
 set -euo pipefail
 
 PROJECT_ID="payments-data-platform-pz01126"
