@@ -37,3 +37,19 @@ Need to remember that LIMIT X does not save reading all the table!
 In Bq NEVER select * and give particular column names used only!
 
 Checked impersionationg  pdp-loader that load_bigquery.sh execution does the same for another service accounts!
+
+
+
+BQ partitioning and clustering:
+
+
+
+Reasonable size of partition is important! 
+
+Using partitioned column in query is critical!
+
+
+Partition similar to Oracle, Clustering is the instrumentation for performance like oracle create index.
+
+
+Important to set require_partition_filter = TRUE to avoid unnecessary high resource demanding queries on partitioned tables.
