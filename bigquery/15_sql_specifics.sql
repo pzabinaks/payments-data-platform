@@ -11,7 +11,7 @@ QUALIFY ROW_NUMBER() OVER (
 ) = 1;
 
 --Task 2
-create table marts.payment_history
+create or replace table marts.payment_history
 as
 with events as (select ARRAY_AGG(STRUCT(status,event_at) ORDER BY event_at,evend_id) as events,payment_id from raw.events a  GROUP BY payment_id)
 select p.payment_id,
@@ -27,7 +27,7 @@ select p.payment_id,
   from marts.fct_payments p
   left join events e
     on p.payment_id=e.payment_id
-  where charge_date>'1999-01-01';
+  where charge_date>'1999-01-01'; -- to fullfill partition filering
 
 
 --Task 3.1 event count for payment
@@ -41,7 +41,7 @@ where exists (select 1 from UNNEST(events) where status='charged_back');
 
 
 --Task 3.3 array to rows
- --  count(1) -- 3884020
+ --  count(1) -- 3884020 count matches with raw.events
 select payment_id,event.status,event.event_at
 from marts.payment_history,
 UNNEST(events) AS event;
@@ -49,7 +49,7 @@ UNNEST(events) AS event;
 
 --Task 4: MERGE: keep a “current status” table up to date.
 --4.1 create initial table
-create table marts.payment_status_current
+create or table marts.payment_status_current
 as 
 SELECT
   payment_id,
