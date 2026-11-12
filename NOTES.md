@@ -43,6 +43,10 @@ Checked impersionationg  pdp-loader that load_bigquery.sh execution does the sam
 BQ partitioning and clustering:
 
 
+Partitions and Clusters can be compared to drawers and folders inside them.
+
+If you check particular drawer (partitioned column condition) rest is untouched. Then inside the drawer you quickly check needed folder (condition on clustered column) as folders are ordered.
+
 
 Reasonable size of partition is important! 
 
