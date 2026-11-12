@@ -7,13 +7,13 @@ SELECT
 FROM raw.events
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at DESC
+  ORDER BY event_at,event_id DESC
 ) = 1;
 
 --Task 2
 create table marts.payment_history
 as
-with events as (select ARRAY_AGG(STRUCT(status,event_at) ORDER BY event_at) as events,payment_id from raw.events a  GROUP BY payment_id)
+with events as (select ARRAY_AGG(STRUCT(status,event_at) ORDER BY event_at,evend_id) as events,payment_id from raw.events a  GROUP BY payment_id)
 select p.payment_id,
        p.mandate_id,
        p.customer_id,
@@ -25,7 +25,7 @@ select p.payment_id,
        p.failure_reason,
        e.events
   from marts.fct_payments p
-  join events e
+  left join events e
     on p.payment_id=e.payment_id
   where charge_date>'1999-01-01';
 
@@ -37,7 +37,6 @@ from marts.payment_history;
 --Task 3.2 payemtns having event 'charged_back'
 select payment_id
 from marts.payment_history,
-UNNEST(events) AS event
 where exists (select 1 from UNNEST(events) where status='charged_back');
 
 
@@ -60,7 +59,7 @@ FROM raw.events
 where date(event_at) <'2026-09-30'
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at DESC
+  ORDER BY event_at,event_id DESC
 ) = 1;
 
 
@@ -99,7 +98,7 @@ SELECT
 FROM raw.events
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at DESC
+  ORDER BY event_at,event_id DESC
 ) = 1
 ) AS source
 ON target.payment_id = source.payment_id 
