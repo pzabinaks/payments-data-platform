@@ -7,13 +7,13 @@ SELECT
 FROM raw.events
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at,event_id DESC
+  ORDER BY event_at DESC,event_id DESC
 ) = 1;
 
 --Task 2
 create or replace table marts.payment_history
 as
-with events as (select ARRAY_AGG(STRUCT(status,event_at) ORDER BY event_at,evend_id) as events,payment_id from raw.events a  GROUP BY payment_id)
+with events as (select ARRAY_AGG(STRUCT(status,event_at) ORDER BY event_at,event_id) as events,payment_id from raw.events a  GROUP BY payment_id)
 select p.payment_id,
        p.mandate_id,
        p.customer_id,
@@ -49,7 +49,7 @@ UNNEST(events) AS event;
 
 --Task 4: MERGE: keep a “current status” table up to date.
 --4.1 create initial table
-create or table marts.payment_status_current
+create or replace table marts.payment_status_current
 as 
 SELECT
   payment_id,
@@ -59,7 +59,7 @@ FROM raw.events
 where date(event_at) <'2026-09-30'
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at,event_id DESC
+  ORDER BY event_at DESC,event_id DESC
 ) = 1;
 
 
@@ -98,7 +98,7 @@ SELECT
 FROM raw.events
 QUALIFY ROW_NUMBER() OVER (
   PARTITION BY payment_id 
-  ORDER BY event_at,event_id DESC
+  ORDER BY event_at DESC ,event_id DESC
 ) = 1
 ) AS source
 ON target.payment_id = source.payment_id 
