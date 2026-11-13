@@ -119,22 +119,25 @@ BEGIN
                                       )
   select i_run_id,
          i_check_month,
-         trg.status,
+         coalesce(src.status,trg.status),
          'total_amount',
-         src.amt,
-         trg.amt,
-         src.amt - trg.amt
-  from (select  sum(amount) amt,  status
-        from marts.fct_payments trg
-       where trg.charge_date >= i_check_month and trg.charge_date< DATE_ADD(i_check_month, INTERVAL 1 MONTH)
-        group by status
-     ) trg
- join (select  sum(cast(trg.amount as numeric) ) amt, status
-        from raw.payments trg
-       where DATE(charge_date) >= i_check_month and DATE(charge_date)< DATE_ADD(i_check_month, INTERVAL 1 MONTH)
-        group by status) src
-   on trg.status=src.status
-where trg.amt<>src.amt;
+         COALESCE(src.amt, 0),
+         COALESCE(trg.amt, 0),
+         COALESCE(src.amt, 0) - COALESCE(trg.amt, 0)
+FROM (
+  SELECT sum(cast(src.amount as numeric) ) amt, status
+  FROM raw.payments src
+  WHERE DATE(charge_date) >= i_check_month and DATE(charge_date)< DATE_ADD(i_check_month, INTERVAL 1 MONTH)
+  GROUP BY status
+) src
+FULL OUTER JOIN (
+  SELECT sum(amount) amt,  status
+  FROM marts.fct_payments trg
+  WHERE trg.charge_date >= i_check_month and trg.charge_date< DATE_ADD(i_check_month, INTERVAL 1 MONTH)
+  GROUP BY status
+) trg
+  ON src.status = trg.status
+WHERE COALESCE(src.amt, 0) <> COALESCE(trg.amt, 0);
 
 SET o_exception_count = @@row_count;
 
@@ -199,6 +202,8 @@ BEGIN
           ,v_err_message
           ,null 
          );
+         
+    RAISE USING MESSAGE = v_err_message;     
   END;
 
 END;

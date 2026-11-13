@@ -1,7 +1,5 @@
 --backup original
-create table marts.fct_payments_original as select * from marts.fct_payments where charge_date>'1990-01-01';
---insert into marts.fct_payments select * from marts.fct_payments_original; 
-
+create or replace table marts.fct_payments_original as select * from marts.fct_payments where charge_date>'1990-01-01';
 
 
 ---- TEST CASE #1   -- valid data, no exceptions 
@@ -59,3 +57,8 @@ left join marts.recon_exceptions rd
   on rl.run_id = rd.run_id
 order by started_at;
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+--restore data
+truncate table marts.fct_payments;
+insert into marts.fct_payments select * from marts.fct_payments_original; 
