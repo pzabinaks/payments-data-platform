@@ -24,9 +24,9 @@ Oracle Database Sharding          | Cloud Spanner                             | 
 Oracle PL/SQL                     | Stored Procedures (PostgreSQL / BigQuery) | Rewritten using standard PL/pgSQL (for AlloyDB/Cloud SQL) or BigQuery SQL.
 Oracle Data Warehouse (ADW)       | BigQuery                                  | BigQuery is completely serverless and separates compute from storage natively, eliminating database tuning or indexing.
 
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 BigQuery
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Data type for amount FLOAT after loading to bigquery!
 
 External tables (still a files in Cloud storage) only for rare selection as much slower.
@@ -59,3 +59,12 @@ In BigQuery you avoid full scans mainly by selecting only the columns you need, 
 
 
 Important to set require_partition_filter = TRUE to avoid unnecessary high resource demanding queries on partitioned tables.
+
+
+Observations when working on reconile procedure:
+-----------------------------------------------
+1. Compare to PL/SQL BQ functions cannot do DMLs, can be only 'read only'. So procedure as with out parameter have to be used instead;
+2. There are differences in compiler, much less details are checked in BQ and more errors can be raised on real execution (still much better than with Postgree procedures).
+3. PL/SQL catches specific named exceptions (WHEN NO_DATA_FOUND THEN, WHEN TOO_MANY_ROWS THEN). BQ uses a single catch-all block (EXCEPTION WHEN ERROR THEN) exposing error details through system variables like @@error.message and @@error.statement_text
+4. In PL/SQL you can group related procedures, functions, types, and private variables together into Packages. In BQ there is no concept of packages.
+5. In PLSQL variables are declared in a dedicated DECLARE section before the BEGIN keyword. In BQ all DECLARE statements has to follow exaclty after BEGIN before any executable statements.
