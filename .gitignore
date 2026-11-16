@@ -6,3 +6,4 @@ data/
 *.tfstate.backup
 *.tfstate
 .terraform/
+logs/
