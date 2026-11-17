@@ -1,13 +1,17 @@
 models:
   - name: stg_customers
+    description: "Customers with creation date"
     columns: 
       - name: customer_id
+        description: "Primary key of customer"
         data_tests:
           - unique
           - not_null
   - name: stg_events
+    description: "Payment events, can be multiple for 1 payment payment"
     columns:    
       - name: event_id
+        description: "Primary key of event"
         data_tests:
           - unique
           - not_null
@@ -15,10 +19,23 @@ models:
         data_tests:
           - relationships:
               field: payment_id 
-              to: ref('stg_payments')          
+              to: ref('stg_payments')   
+      - name: status
+        data_tests:
+          - accepted_values:
+              values:              
+                - status
+                - charged_back
+                - confirmed
+                - failed
+                - paid_out
+                - pending_submission
+                - submitted
   - name: stg_mandates
+    description: "Mandates linking customer and merchant"
     columns: 
       - name: mandate_id
+        description: "Primary key of mandate"
         data_tests:
           - unique
           - not_null
@@ -28,6 +45,12 @@ models:
               values:              
                 - sepa_core
                 - bacs
+      - name: status
+        data_tests:
+          - accepted_values:
+              values:              
+                - active
+                - cancelled
       - name: customer_id
         data_tests:
           - relationships:
@@ -39,14 +62,17 @@ models:
               field: merchant_id 
               to: ref('stg_merchants')                          
   - name: stg_merchants
+    description: "Merchants used in mandates"
     columns: 
       - name: merchant_id
         data_tests:
           - unique
           - not_null
   - name: stg_payments
+    description: "One row per payment. Cleaned from raw.payments: amount cast to NUMERIC, charge_date to DATE."
     columns: 
       - name: payment_id
+        description: "Primary key of payment"
         data_tests:
           - unique
           - not_null
