@@ -78,6 +78,12 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: country
+        description: "Country code"
+        data_tests:
+          - relationships:
+              field: country_code 
+              to: ref('countries')           
   - name: stg_payments
     description: "One row per payment. Cleaned from raw.payments: amount cast to NUMERIC, charge_date to DATE."
     columns: 
@@ -105,4 +111,4 @@ models:
         data_tests:
           - relationships:
               field: mandate_id 
-              to: ref('stg_mandates')            
+              to: ref('stg_mandates')                      
