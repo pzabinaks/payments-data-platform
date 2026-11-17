@@ -1,0 +1,10 @@
+sources:
+  - name: raw
+    database: payments-data-platform-pz01126  
+    schema: raw
+    tables:
+      - name: customers
+      - name: merchants
+      - name: mandates
+      - name: payments
+      - name: events
