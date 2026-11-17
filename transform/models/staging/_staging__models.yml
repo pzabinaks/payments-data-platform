@@ -24,7 +24,6 @@ models:
         data_tests:
           - accepted_values:
               values:              
-                - status
                 - charged_back
                 - confirmed
                 - failed
