@@ -6,7 +6,7 @@ renamed as (
     select
         payment_id,
         mandate_id,
-        cast(amount as numeric) amount,
+        cast(amount as numeric) as amount,
         currency,
         date(charge_date) as charge_date,
         status,	

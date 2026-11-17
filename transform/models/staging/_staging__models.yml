@@ -7,6 +7,17 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: country
+        description: "Country code"
+        data_tests:
+          - relationships:
+              field: country_code 
+              to: ref('countries')
+      - name: name
+        description: "Customer name  - PII"    
+      - name: email
+        description: "Customers email  - PII"
+
   - name: stg_events
     description: "Payment events, can be multiple for 1 payment payment"
     columns:    

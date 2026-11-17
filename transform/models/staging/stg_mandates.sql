@@ -10,8 +10,8 @@ renamed as (
         scheme,
         currency,
         status,
-        created_at,
-        cancelled_at
+        date(created_at) as created_at,
+        date(cancelled_at) as cancelled_at
     from source
 )
 
