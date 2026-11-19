@@ -17,7 +17,7 @@ final as (
         status,
         created_at,
         cancelled_at,
-        case when status='cancelled' then 1 else 0 end as is_active
+        case when status='cancelled' then 0 else 1 end as is_active
     from mandates man
 )
 

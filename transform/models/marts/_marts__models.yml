@@ -200,8 +200,8 @@ models:
       - name: charged_back_at
         description: "Flag is payment charged back"
       - name: days_to_payout
-        description: "Days between paid_out_at and submitted_at"
+        description: "Calendare days between paid_out_at and submitted_at"
       - name: days_to_charge_back
-        description: "Days between charged_back_at and paid_out_at"
+        description: "Calendar days between charged_back_at and paid_out_at"
       - name: currency
         description: "Currency code for payment"

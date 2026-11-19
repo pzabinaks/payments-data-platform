@@ -40,7 +40,7 @@ final as (
           ,dim_dat.date_sk as charge_date_sk
           ,dim_cus.customer_sk as customer_sk
           ,dim_mer.merchant_sk as merchant_sk
-          ,stg_man.merchant_id
+          ,dim_man.merchant_id
           ,dim_man.mandate_sk as mandate_sk
           ,stg_dim_dates.submitted_dt_sk as submitted_date_sk
           ,stg_dim_dates.confirmed_dt_sk as confirmed_date_sk
@@ -53,18 +53,16 @@ final as (
          ,stg_pay.failure_reason as failure_reason
          ,case when stg_dim_dates.failed_at is not null then 1 else 0 end as is_failed
          ,case when stg_dim_dates.charged_back_at is not null then 1 else 0 end as is_charged_back
-         ,stg_dim_dates.paid_out_at - stg_dim_dates.submitted_at as  days_to_payout
-         ,stg_dim_dates.charged_back_at - stg_dim_dates.paid_out_at as days_to_charge_back
+         ,DATE_DIFF(DATE(stg_dim_dates.paid_out_at), DATE(stg_dim_dates.submitted_at), DAY)   as  days_to_payout
+         ,DATE_DIFF(DATE(stg_dim_dates.charged_back_at), DATE(stg_dim_dates.paid_out_at), DAY) as days_to_charge_back
          ,stg_pay.currency
    from stg_payments as stg_pay
-   join stg_mandates as stg_man
-     on (stg_pay.mandate_id = stg_man.mandate_id)
    join dim_mandates  as dim_man
      on stg_pay.mandate_id = dim_man.mandate_id
    join dim_merchants dim_mer
-     on (dim_mer.merchant_id = stg_man.merchant_id)
+     on (dim_mer.merchant_id = dim_man.merchant_id)
    join dim_customers dim_cus 
-     on (dim_cus.customer_id  = stg_man.customer_id) 
+     on (dim_cus.customer_id  = dim_man.customer_id) 
    join dim_dates dim_dat
      on (stg_pay.charge_date = dim_dat.calendar_date)
  left join (select stg_eve.payment_id
