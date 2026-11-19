@@ -1,0 +1,21 @@
+models:
+  - name: int_payment_milestones
+    description: "Intermediate payment table - with all statuse dates in one line"
+    columns:
+      - name: payment_id
+        description: "PK"
+        data_tests:
+          - unique
+          - not_null         
+      - name: submitted_at
+        description: "Latest timestamp for 'submitted'"
+      - name: paid_out_at
+        description: "Latest timestamp for 'paid_out'"
+      - name: failed_at
+        description: "Latest timestamp for 'failed'"
+      - name: charged_back_at
+        description: "Latest timestamp for 'charged_back'"
+      - name: pending_submission_at
+        description: "Latest timestamp for 'pending_submission'"
+      - name: confirmed_at
+        description: "Latest timestamp for 'confirmed'"

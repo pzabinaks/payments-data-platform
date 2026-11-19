@@ -1,0 +1,152 @@
+models:
+  - name: dim_customers
+    description: "Customers dimetion table"
+    columns: 
+      - name: customer_sk
+        description: "Primary key of dim_customer"
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Customer_id from source"     
+      - name: name
+        description: "Customers name"    
+      - name: email
+        description: "Customers e-mail" 
+      - name: country
+        description: "Customers country code" 
+      - name: created_at
+        description: "Date when customer created"         
+      - name: country_name
+        description: "Customers country name"           
+        data_tests:
+          - not_null   
+
+  - name: dim_mandates
+    description: "Mandates dimetion table"
+    columns: 
+      - name: mandate_sk
+        description: "Primary key of dim_mandates"
+        data_tests:
+          - unique
+          - not_null
+      - name: mandate_id
+        description: "Mandate id from source" 
+      - name: customer_id
+        description: "Customer_id from source" 
+      - name: merchant_id
+        description: "Merchant_id from source" 
+      - name: merchant_id
+        description: "Scheme - sepa_core/bacs" 
+      - name: merchant_id
+        description: "Currency of mandate" 
+      - name: status
+        description: "Status - active/cancelled" 
+      - name: created_at
+        description: "Mandates creation date" 
+      - name: cancelled_at
+        description: "Mandates cancellation date"
+      - name: is_active 
+        description: "Flag: 0 -  mandate cancelled, 1 - active mandate"
+
+  - name: dim_merchants
+    description: "Merchants dimetion table"  
+    columns: 
+      - name: merchant_sk
+        description: "Primary key of dim_merchants"
+        data_tests:
+          - unique
+          - not_null
+      - name: merchant_id
+        description: "Merchant_id from source"      
+      - name: name
+        description: "Name of merchant"   
+      - name: category
+        description: "Category of merchant: gym,insurance,media,saas,telecom,utilities"   
+      - name: country
+        description: "Merchants country code" 
+      - name: country_name
+        description: "Merchants country name" 
+        data_tests:
+          - not_null  
+
+  - name: dim_dates
+    description: "Dates dimetion table"
+    columns: 
+      - name: date_sk
+        description: "Primary key of dim_dates"
+        data_tests:
+          - unique
+          - not_null
+      - name: calendar_date
+        description: "Calendar date"
+      - name: month
+        description: "Month as number"
+      - name: year
+        description: "Year"
+      - name: quarter
+        description: "Quarter: 1-4"
+      - name: day_in_week
+        description: "Day in a week. First day Monday"
+      - name: weekend_day
+        description: "Is it weekends day"
+      - name: month_name
+        description: "Name of the month"
+      - name: year_month
+        description: "YEARand month in format YYYYMM as integer"
+
+  - name: fct_payments
+    description: "Payments fact table"
+    config:
+      materialized: table
+      partition_by:
+        field: charge_date
+        data_type: date # Change to 'timestamp' or 'datetime' if charge_date is not a DATE
+        granularity: month
+      cluster_by:
+        - merchant_id
+    columns:
+      - name: payment_sk
+        description: "Payment fact table PK"  
+      - name: charge_date
+        description: "Payment date - DATE"                 
+      - name: charge_date_sk
+        description: "FK to dim_date for charge_date"   
+      - name: customer_sk
+        description: "FK to dim_customer"  
+      - name: merchant_sk
+        description: "FK to dim_merchant"  
+      - name: mandate_sk
+        description: "FK to dim_mandate" 
+      - name: merchant_id      
+        description: "Natural key of merchant - clustered column!"  
+      - name: submitted_dt_sk
+        description: "FK to dim_date for date when payment was submitted" 
+      - name: confirmed_dt_sk
+        description: "FK to dim_date for date when payment was confirmed" 
+      - name: paid_out_dt_sk
+        description: "FK to dim_date for date when payment was paid out" 
+      - name: failed_dt_sk
+        description: "FK to dim_date for date when payment failed"
+      - name: charged_back_dt_sk
+        description: "FK to dim_date for date when payment was charged back"
+      - name: pending_submission_dt_sk
+        description: "FK to dim_date for date when payment was put on pending submission"
+      - name: amount
+        description: "Amount of payment"
+      - name: status
+        description: "Status of payment"
+      - name: failure_reason
+        description: "Failure reason of payment"
+      - name: is_failed
+        description: "Flag is payment failed or not"
+      - name: charged_back_at
+        description: "Flag is payment charged back"
+      - name: charged_back_at
+        description: "Flag is payment charged back"
+      - name: days_to_payout
+        description: "Days between paid_out_at and submitted_at"
+      - name: days_to_charge_back
+        description: "Days between charged_back_at and paid_out_at"
+      - name: currency
+        description: "Currency code for payment"
