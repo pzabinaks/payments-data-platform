@@ -4,12 +4,6 @@ with stg_payments as (
 
 ),
 
-stg_mandates as (
-
-    select * from {{ ref('stg_mandates') }}
-
-),
-
 dim_dates as (
     select * from {{ref('dim_dates')}}
 ),
