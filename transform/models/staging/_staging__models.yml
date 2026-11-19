@@ -11,8 +11,9 @@ models:
         description: "Country code"
         data_tests:
           - relationships:
-              field: country_code 
-              to: ref('countries')
+              arguments:
+                to: ref('countries')
+                field: country_code 
       - name: name
         description: "Customer name  - PII"    
       - name: email
@@ -29,18 +30,15 @@ models:
       - name: payment_id
         data_tests:
           - relationships:
-              field: payment_id 
-              to: ref('stg_payments')   
+              arguments:
+                to: ref('stg_payments')   
+                field: payment_id 
       - name: status
         data_tests:
           - accepted_values:
-              values:              
-                - charged_back
-                - confirmed
-                - failed
-                - paid_out
-                - pending_submission
-                - submitted
+              arguments:
+                values: ['charged_back','confirmed','failed','paid_out','pending_submission','submitted']              
+
   - name: stg_mandates
     description: "Mandates linking customer and merchant"
     columns: 
@@ -52,25 +50,25 @@ models:
       - name: scheme
         data_tests:
           - accepted_values:
-              values:              
-                - sepa_core
-                - bacs
+              arguments:
+                values: ['sepa_core', 'bacs']              
       - name: status
         data_tests:
           - accepted_values:
-              values:              
-                - active
-                - cancelled
+              arguments:            
+                values: ['active','cancelled']
       - name: customer_id
         data_tests:
           - relationships:
-              field: customer_id 
-              to: ref('stg_customers')
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id 
       - name: merchant_id
         data_tests:
           - relationships:
-              field: merchant_id 
-              to: ref('stg_merchants')                          
+              arguments: 
+                to: ref('stg_merchants')   
+                field: merchant_id                       
   - name: stg_merchants
     description: "Merchants used in mandates"
     columns: 
@@ -82,8 +80,9 @@ models:
         description: "Country code"
         data_tests:
           - relationships:
-              field: country_code 
-              to: ref('countries')           
+              arguments:
+                to: ref('countries')      
+                field: country_code 
   - name: stg_payments
     description: "One row per payment. Cleaned from raw.payments: amount cast to NUMERIC, charge_date to DATE."
     columns: 
@@ -95,20 +94,17 @@ models:
       - name: status
         data_tests:
           - accepted_values:
-              values:              
-                - paid_out
-                - failed
-                - confirmed
-                - charged_back
-                - submitted           
+              arguments:
+                values: ['paid_out','failed','confirmed','charged_back','submitted']                    
       - name: currency
         data_tests:
           - accepted_values:
-              values:              
-                - EUR
-                - GBP
+              arguments:
+                values: ['EUR','GBP']              
       - name: mandate_id
         data_tests:
           - relationships:
-              field: mandate_id 
-              to: ref('stg_mandates')                      
+              arguments:
+                to: ref('stg_mandates')    
+                field: mandate_id 
+                  

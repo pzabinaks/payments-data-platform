@@ -107,31 +107,86 @@ models:
         - merchant_id
     columns:
       - name: payment_sk
-        description: "Payment fact table PK"  
+        description: "Payment fact table PK"
+        data_tests:
+          - unique
+          - not_null        
+      - name: payment_id
+        description: "Payments natural id"          
       - name: charge_date
         description: "Payment date - DATE"                 
       - name: charge_date_sk
-        description: "FK to dim_date for charge_date"   
+        description: "FK to dim_date for charge_date"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk            
       - name: customer_sk
-        description: "FK to dim_customer"  
+        description: "FK to dim_customer"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customers')      
+                field: customer_sk         
       - name: merchant_sk
         description: "FK to dim_merchant"  
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_merchants')      
+                field: merchant_sk          
       - name: mandate_sk
-        description: "FK to dim_mandate" 
+        description: "FK to dim_mandate"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_mandates')      
+                field: mandate_sk          
       - name: merchant_id      
-        description: "Natural key of merchant - clustered column!"  
-      - name: submitted_dt_sk
+        description: "Natural key of merchant - clustered column!"          
+      - name: submitted_date_sk
         description: "FK to dim_date for date when payment was submitted" 
-      - name: confirmed_dt_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk          
+      - name: confirmed_date_sk
         description: "FK to dim_date for date when payment was confirmed" 
-      - name: paid_out_dt_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk 
+      - name: paid_out_date_sk
         description: "FK to dim_date for date when payment was paid out" 
-      - name: failed_dt_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk 
+      - name: failed_date_sk
         description: "FK to dim_date for date when payment failed"
-      - name: charged_back_dt_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk 
+      - name: charged_back_date_sk
         description: "FK to dim_date for date when payment was charged back"
-      - name: pending_submission_dt_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk 
+      - name: pending_submission_date_sk
         description: "FK to dim_date for date when payment was put on pending submission"
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_dates')      
+                field: date_sk 
       - name: amount
         description: "Amount of payment"
       - name: status

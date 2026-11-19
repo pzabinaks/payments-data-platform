@@ -35,6 +35,7 @@ final as (
 
     select
         {{ dbt_utils.generate_surrogate_key(['stg_pay.payment_id']) }} as payment_sk
+          ,stg_pay.payment_id
           ,stg_pay.charge_date
           ,dim_dat.date_sk as charge_date_sk
           ,dim_cus.customer_sk as customer_sk
