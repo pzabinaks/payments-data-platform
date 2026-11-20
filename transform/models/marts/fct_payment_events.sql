@@ -1,7 +1,10 @@
 {{ config(
     materialized = 'incremental',
     unique_key = 'event_id',
-    partition_by = {'field': 'event_at', 'data_type': 'timestamp', 'granularity': 'month'}
+    partition_by = {'field': 'event_at', 'data_type': 'timestamp', 'granularity': 'month'},
+    incremental_predicates = [
+  "DBT_INTERNAL_DEST.event_at > timestamp_sub(current_timestamp(), interval 30 day)"
+]
 ) }}
 
 
