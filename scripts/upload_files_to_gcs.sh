@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ID="payments-data-platform-pz01126"
-DATASET="raw"
 BUCKET_NAME="gs://payments-data-platform-pz01126-raw"
 
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$(cd "${SCRIPT_DIR}/../data/raw" && pwd)"
+SOURCE_DIR="$(cd "${SCRIPT_DIR}/../data/raw/domain" && pwd)"
 
 if [[ ! -d "$SOURCE_DIR" ]]; then
   echo "Error: Source directory '$SOURCE_DIR' does not exist." >&2
