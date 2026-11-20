@@ -205,3 +205,34 @@ models:
         description: "Calendar days between charged_back_at and paid_out_at"
       - name: currency
         description: "Currency code for payment"
+
+  - name: fct_payment_events
+    description: "Fact table for payment events"
+    columns: 
+      - name: event_sk
+        description: "Primary key of fct_payment_events"
+        data_tests:
+          - unique
+          - not_null
+      - name: calendar_date
+        description: "Calendar date"            
+      - name: event_id
+        description: "Event id from source"   
+      - name: payment_id
+        description: "Payment id from source"   
+      - name: payment_id
+        description: "Payment id from source"   
+      - name: payment_sk
+        description: "FK to dim_payments"   
+      - name: date_sk
+        description: "FK to dim_dates for event_at"           
+      - name: event_at
+        description: "Timestamp for event" 
+      - name: status
+        description: "Events status" 
+      - name: customer_sk
+        description: "FK to dim_customers" 
+      - name: merchant_sk
+        description: "FK to dim_merchants" 
+      - name: mandate_sk
+        description: "FK to dim_mandates"
