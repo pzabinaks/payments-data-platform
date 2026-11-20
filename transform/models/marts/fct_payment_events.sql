@@ -3,7 +3,7 @@
     unique_key = 'event_id',
     partition_by = {'field': 'event_at', 'data_type': 'timestamp', 'granularity': 'month'},
     incremental_predicates = [
-  "DBT_INTERNAL_DEST.event_at > timestamp_sub(current_timestamp(), interval 30 day)"
+  "DBT_INTERNAL_DEST.event_at > timestamp('2026-09-01')"
 ]
 ) }}
 
@@ -27,5 +27,5 @@ join {{ ref('dim_dates')}} dim_dat
 
 {% if is_incremental() %}
   -- only on incremental runs: rows newer than what's already in the table
-  where event_at > (select timestamp_sub(max(event_at), interval 3 day) from {{ this }})
+  where event_at > (select timestamp_sub(max(event_at), interval 20 day) from {{ this }})
 {% endif %}

@@ -1,0 +1,8 @@
+snapshots:
+  - name: merchants_snapshot_check
+    relation: source('raw', 'merchants') 
+    config:
+      schema: snapshots
+      unique_key: merchant_id
+      strategy: check
+      check_cols:  all

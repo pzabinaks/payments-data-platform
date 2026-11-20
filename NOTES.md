@@ -68,3 +68,23 @@ Observations when working on reconile procedure:
 3. PL/SQL catches specific named exceptions (WHEN NO_DATA_FOUND THEN, WHEN TOO_MANY_ROWS THEN). BQ uses a single catch-all block (EXCEPTION WHEN ERROR THEN) exposing error details through system variables like @@error.message and @@error.statement_text
 4. In PL/SQL you can group related procedures, functions, types, and private variables together into Packages. In BQ there is no concept of packages.
 5. In PLSQL variables are declared in a dedicated DECLARE section before the BEGIN keyword. In BQ all DECLARE statements has to follow exaclty after BEGIN before any executable statements.
+
+
+DBT:
+-----------------------------------------------------
+
+Snapshots:
+
+Snaphots are powerful and fast set up way to track changes. dbt adds its own dbt_updated_at, dbt_valid_from and dbt_valid_to. Valid record is having dbt_valid_to as NULL.
+
+
+There are 2 srategy options: timestamp or check. Timestamp option compares a designated timestamp column (updated_at) against the previous snapshot run.
+Check option used when there is no 'updated_at' timestamp colum in table.
+
+
+In check option Only changes configured check_cols are in scope for tracking. Best practice is to use check_cols: All option - this way we track all the changes.
+
+
+Snapshot is the only model that cannot be rebuild must be treated very carefully not to lost historical data modifications !!!
+
+Snapshots capture state at run time, so intermediate changes are lost and valid_from is the run time. If full history matters, I’d use CDC or a source audit table instead
