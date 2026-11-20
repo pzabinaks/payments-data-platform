@@ -6,7 +6,7 @@
   "DBT_INTERNAL_DEST.event_at > timestamp('2026-09-01')"
 ]
 ) }}
-
+--fixed date because the test data ends 2026-10-15; in production use current_timestamp() minus a window wider than the lookback
 
 select {{ dbt_utils.generate_surrogate_key(['stg_eve.event_id']) }} as event_sk
       ,stg_eve.event_id
