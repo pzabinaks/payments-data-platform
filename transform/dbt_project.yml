@@ -45,3 +45,10 @@ models:
 snapshots:
   payments_dbt:
     +target_schema: snapshots
+
+data_tests:
+  dbt_project_evaluator:
+    marts:
+      dag:
+        is_empty_fct_root_models_:
+          +enabled: false    

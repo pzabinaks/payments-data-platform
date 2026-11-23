@@ -97,4 +97,20 @@ In check option Only changes configured check_cols are in scope for tracking. Be
 
 Snapshot is the only model that cannot be rebuild must be treated very carefully not to lost historical data modifications !!!
 
-Snapshots capture state at run time, so intermediate changes are lost and valid_from is the run time. If full history matters, I’d use CDC or a source audit table instead
+Snapshots capture state at run time, so intermediate changes are lost and valid_from is the run time. If full history matters, I’d use CDC or a source audit table instead.
+
+
+Documentation:
+-------------------------------------------------------------
+To check undocumented parts package dbt_project_evaluator can be used:
+  1. Run: uv run dbt build --select +fct_undocumented_models +fct_documentation_coverage
+  2. Query the data in BQ: 
+      
+     -- Models having no documentation
+     SELECT *
+       FROM `payments-data-platform-pz01126.dbt_dev.fct_undocumented_models`;
+
+     -- coverage of documentation for models
+     SELECT *
+       FROM `payments-data-platform-pz01126.dbt_dev.fct_documentation_coverage`; 
+

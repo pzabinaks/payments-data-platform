@@ -28,12 +28,14 @@ models:
           - unique
           - not_null
       - name: payment_id
+        description: "Original payment_id"      
         data_tests:
           - relationships:
               arguments:
                 to: ref('stg_payments')   
                 field: payment_id 
       - name: status
+        description: "{{ doc('event_status') }}"
         data_tests:
           - accepted_values:
               arguments:
@@ -48,22 +50,26 @@ models:
           - unique
           - not_null
       - name: scheme
+        description: "Scheme of mandate: sepa_core,bacs"         
         data_tests:
           - accepted_values:
               arguments:
                 values: ['sepa_core', 'bacs']              
       - name: status
-        data_tests:
+        description: "Status of mandate: active, cancelled"           
+        data_tests:        
           - accepted_values:
               arguments:            
                 values: ['active','cancelled']
       - name: customer_id
+        description: "Original customer_id"     
         data_tests:
           - relationships:
               arguments:
                 to: ref('stg_customers')
                 field: customer_id 
       - name: merchant_id
+        description: "Original merchant_id"    
         data_tests:
           - relationships:
               arguments: 
@@ -73,9 +79,12 @@ models:
     description: "Merchants used in mandates"
     columns: 
       - name: merchant_id
+        description: "Primary key"      
         data_tests:
           - unique
           - not_null
+      - name: category
+        description: "Merhant category"
       - name: country
         description: "Country code"
         data_tests:
@@ -91,20 +100,26 @@ models:
         data_tests:
           - unique
           - not_null
+      - name: amount
+        description: "Payment amount"
+      - name: charge_date
+        description: ""  
       - name: status
+        description: "{{ doc('payment_status') }}"
         data_tests:
           - accepted_values:
               arguments:
                 values: ['paid_out','failed','confirmed','charged_back','submitted']                    
       - name: currency
+        description: "Curency of payment"
         data_tests:
           - accepted_values:
               arguments:
                 values: ['EUR','GBP']              
       - name: mandate_id
+        description: "FK to mandate"
         data_tests:
           - relationships:
               arguments:
                 to: ref('stg_mandates')    
                 field: mandate_id 
-                  
