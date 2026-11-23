@@ -1,5 +1,6 @@
 sources:
   - name: raw
+    description: "Raw data source for staging"
     database: payments-data-platform-pz01126  
     schema: raw
     tables:
@@ -16,5 +17,5 @@ sources:
         config:
           loaded_at_field: event_at 
           freshness:
-            warn_after: { count: 24, period: day }
+            warn_after: { count: 24, period: hour }
             error_after: { count: 24, period: day }        

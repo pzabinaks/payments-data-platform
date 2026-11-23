@@ -50,8 +50,9 @@ snapshots:
 
 
 sources:
-  name: raw
-  description: "Raw data source"
+  payments_dbt:
+    raw:
+      +enabled: true
 
 data_tests:
   dbt_project_evaluator:
