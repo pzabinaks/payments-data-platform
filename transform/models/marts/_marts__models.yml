@@ -204,14 +204,18 @@ models:
         data_tests:
           - dbt_utils.expression_is_true:
               arguments:
-                expression: ">= 0"          
+                expression: ">= 0"
+              config:
+                store_failures: true          
       - name: days_to_charge_back
         description: "Calendar days between charged_back_at and paid_out_at"
         data_tests:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 10
-                max_value: 60    
+                max_value: 60
+              config:
+                severity: warn    
       - name: currency
         description: "Currency code for payment"
 

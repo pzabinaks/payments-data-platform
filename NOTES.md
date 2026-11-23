@@ -61,6 +61,16 @@ In BigQuery you avoid full scans mainly by selecting only the columns you need, 
 Important to set require_partition_filter = TRUE to avoid unnecessary high resource demanding queries on partitioned tables.
 
 
+How to check used GBs:
+
+SELECT
+  ROUND(SUM(total_bytes_billed) / POW(1024, 3), 2) AS gib_billed_this_month
+FROM `region-eu`.INFORMATION_SCHEMA.JOBS
+WHERE creation_time >= TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), MONTH)
+  AND job_type = 'QUERY';
+
+
+
 Observations when working on reconile procedure:
 -----------------------------------------------
 1. Compare to PL/SQL BQ functions cannot do DMLs, can be only 'read only'. So procedure as with out parameter have to be used instead;
