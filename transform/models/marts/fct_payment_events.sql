@@ -12,7 +12,7 @@ select {{ dbt_utils.generate_surrogate_key(['stg_eve.event_id']) }} as event_sk
       ,stg_eve.event_id
       ,fct_pay.payment_id
       ,fct_pay.payment_sk
-      ,dim_dat.date_sk
+      ,cast(format_date('%Y%m%d', date(event_at)) as int64) date_sk
       ,stg_eve.event_at
       ,stg_eve.status
       ,fct_pay.customer_sk
@@ -21,8 +21,6 @@ select {{ dbt_utils.generate_surrogate_key(['stg_eve.event_id']) }} as event_sk
 from {{ ref('stg_events') }} stg_eve
 join {{ ref('fct_payments')}} fct_pay
   on stg_eve.payment_id=fct_pay.payment_id
-join {{ ref('dim_dates')}} dim_dat
-  on dim_dat.calendar_date = date(stg_eve.event_at)
 
 
 {% if is_incremental() %}

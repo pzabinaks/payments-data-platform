@@ -28,6 +28,8 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 
 models:
+  dbt_project_evaluator:
+    +enabled: "{{ target.name != 'prod' }}"
   payments_dbt:
     staging:
       # Config indicated by + and applies to all files under models/staging/
@@ -46,9 +48,11 @@ snapshots:
   payments_dbt:
     +target_schema: snapshots
 
+
+sources:
+  name: raw
+  description: "Raw data source"
+
 data_tests:
   dbt_project_evaluator:
-    marts:
-      dag:
-        is_empty_fct_root_models_:
-          +enabled: false    
+    +enabled: "{{ target.name != 'prod' }}"

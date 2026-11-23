@@ -190,7 +190,7 @@ models:
       - name: amount
         description: "Amount of payment"
       - name: status
-        description: "Status of payment"
+        description: "{{ doc('payment_status') }}"
       - name: failure_reason
         description: "Failure reason of payment"
       - name: is_failed
@@ -242,7 +242,7 @@ models:
       - name: event_at
         description: "Timestamp for event" 
       - name: status
-        description: "Events status" 
+        description: "{{ doc('event_status') }}"
       - name: customer_sk
         description: "FK to dim_customers" 
       - name: merchant_sk
