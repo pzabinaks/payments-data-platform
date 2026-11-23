@@ -6,3 +6,9 @@ snapshots:
       unique_key: merchant_id
       strategy: check
       check_cols:  all
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - merchant_id
+              - dbt_valid_from

@@ -41,3 +41,7 @@ models:
       # Data marts
       +materialized: table
       +schema: marts
+
+snapshots:
+  payments_dbt:
+    +target_schema: snapshots

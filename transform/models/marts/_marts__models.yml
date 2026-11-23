@@ -201,8 +201,17 @@ models:
         description: "Flag is payment charged back"
       - name: days_to_payout
         description: "Calendare days between paid_out_at and submitted_at"
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"          
       - name: days_to_charge_back
         description: "Calendar days between charged_back_at and paid_out_at"
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 10
+                max_value: 60    
       - name: currency
         description: "Currency code for payment"
 
