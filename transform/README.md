@@ -1,8 +1,10 @@
-Welcome to your new dbt project!
+# Payment handling project documentation
+
+
 
 ### What it is:
 
-Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into a tested star schema.
+Dbt project that transforms raw direct-debit style payment data in BigQuery into a tested star schema.
 
 
 
@@ -17,27 +19,30 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 |              | **mandates**   - Defined mandates to link customer with merchant| raw
 |              | **payments**   - Payment information| raw
 |              | **events**     - Table holding payment events data. All the history for payment with statuses| raw
-| **staging**  | Layer build on sources with some minor transformations - timestampt to date, float to number|
+| **staging**  | Layer build on sources with some minor transformations - timestamp to date, float to number|
 |              | **stg_customers**  - Customer data for payments| staging
 |              | **stg_merchants**  - Merchants involved for payments   | staging                                                                               
 |              | **stg_mandates**   - Defined mandates to link customer with merchant| staging
 |              | **stg_payments**   - Payment information (amount transformed from float to number.charge_date to date from timestamp )| staging
 |              | **stg_events**     - Table holding payment events data. All the history for payment with statuses| staging
 | **intermediate**  | For now payment milestone transformation for later usage in marts|
-|              | **int_payement_milestones**  - Intermediate payment table - with all statuse dates in one line| intermediate
-| **marts**  | Layer for fact tables and dimentions|
-|              | **dim_customer**  - Customer dimention table| marts
-|              | **dim_dates**     - Dates dimention table| marts
-|              | **dim_mandates**  - Mandates dimention table| marts
-|              | **dim_merchants** - Merchants dimention table| marts
+|              | **int_payment_milestones**  - Intermediate payment table - with all statuses dates in one line| intermediate
+| **marts**  | Layer for fact tables and dimensions|
+|              | **dim_customers** - Customer dimension table| marts
+|              | **dim_dates**     - Dates dimension table| marts
+|              | **dim_mandates**  - Mandates dimension table| marts
+|              | **dim_merchants** - Merchants dimension table| marts
 |              | **fct_payments** - Main payment fact table| marts
-|              | **fct_payment_events** - Payement event fact table| marts
+|              | **fct_payment_events** - Payment event fact table| marts
 |---|---|---
 | **seeds**  | Layer for seeds|
-|            | **counries.csv** - Country codes and names. Used in fact tables and validations|
+|            | **countries.csv** - Country codes and names. Used in dimension table dim_customers and dim_merchants and validations|
 | **snapshots**  | Layer for snapshots|
-|            | **merchant_snapshot** - Country codes and names. Used in fact tables and validations|snapshots
+|            | **merchant_snapshot** - SCD2 history of raw.merchants, all columns, with handled  dbt_valid_from/dbt_valid_to|snapshots
 
+ *Note:
+    For prod mode dataset names will be: raw, staging,marts etc. In dev mode run project will be concatenated in name like: dbt_dev_marts,dbt_dev_staging...
+    This is handled by macros generate_schema_names.sql
 
 
 ### Materialization:
@@ -47,9 +52,9 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 | **staging**  | View |
 | **intermediate**  | View |
 | **marts**  | Table |
-| **fct_payment_events**  | Incremental | Incremental approuch used here. Merge based on event_at timestamp
+| **fct_payment_events**  | Incremental | Incremental approach used here. Merge based on event_id. incremental_predicates is set as fixed date to restrict how much table scans during MERGE. This is done to lower query costs and runtime
 
-
+to restrict how much of the existing destination table BigQuery scans during a MERGE, enabling partition pruning to dramatically lower query costs and runtimes
 
 ### Setup:
 
@@ -57,6 +62,8 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 
     * **Python & `uv`:** Install [uv](https://astral.sh).
     * **Google Cloud CLI:** Install the [Google Cloud SDK (`gcloud`)](https://google.com).
+    * **raw data loaded:** Raw data has to be loaded using (upload_files_to_gcs.sh → load_bigquery.sh)
+    * **navigate to transform folder:**  cd transform
 
 
 
@@ -70,19 +77,7 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 
 
 
-2. **Configure pacgages.yml adding dbt_utils and dbt_project_evaluator packages used in this project**
-   Example:
-
-    ```yaml
-      packages:
-      - package: dbt-labs/dbt_utils
-        version: 1.4.1
-
-      - package: dbt-labs/dbt_project_evaluator
-        version: [">=0.14.0", "<2.0.0"]  
-    ```
-
-   Execute command:
+2. **install packages**
 
     ```bash
     uv run dbt deps
@@ -104,7 +99,7 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
    Example:
    
    ```yaml
-     project_name:
+     payments_dbt:
        target: dev # this sets dev as default profile
        outputs:
          dev:
@@ -129,7 +124,7 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
            project: your_project_id
            threads: 4
            type: bigquery
-           maximum_bytes_billed: 2000000000   # 1 GB per query  
+           maximum_bytes_billed: 2000000000   # 2 GB per query  
     ```
     *(Replace `project_name` and `your_project_id` with your dbt project name and GCP project ID.)*
 
@@ -150,7 +145,7 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 * **`uv run dbt docs generate`** — Compiles your project's metadata, catalog, and lineage graph into static documentation files.
 * **`uv run dbt docs serve`** — Launches a local web server to view the generated interactive documentation in your browser.
 * **`uv run dbt parse --show-all-deprecations`** - Validates your dbt project's YAML, Jinja, and SQL syntax without executing any queries against BigQuery, and prints every single deprecation warning in your project instead of stopping at the first occurrence.
-* **`uv run dbt build --full-refresh`** - To force all incremental models to perform a full reload during 
+* **`uv run dbt build --full-refresh`** - To force all incremental models to perform a full reload during a build
 
 
 ### Testing: 
@@ -159,17 +154,23 @@ Dbt project that trasforms raw  direct-debit style payment data ib BigQuery into
 |---|---|---
 | **keys**  |Error| All keys of mart created fct_ and dim_ tables  have -unique and -not_null data_tests defined
 | **relationships**  |Error| fct_payments - all charge_date_sk/submitted_date_sk/confirmed_date_sk/paid_out_date_sk/charged_back_date_sk/pending_submission_date_sk is checked for value of dim_date.date_sk
-|                    |Error| stg_events - payment_id exists in stg_paments.payment_id
+|                    |Error| stg_events - payment_id exists in stg_payments.payment_id
 |                    |Error| stg_mandates - customer_id exists in stg_customer.customer_id
 |                    |Error| stg_mandates - merchant_id exists in stg_merchants.merchant_id
 |                    |Error| stg_merchants - country exists in countries.csv seed
 |                    |Error| stg_payments  - mandate_id exists in stg_mandates.mandate_id
+|                    |Error| stg_customers  - country exists in countries.csv seed
 | **accepted values** |Error| stg_payments  - status in: 'paid_out','failed','confirmed','charged_back','submitted'
 |                     |Error| stg_payments  - currency in: 'EUR','GBP'
 |                     |Error| stg_event  - status in: 'charged_back','confirmed','failed','paid_out','pending_submission','submitted'
-|**reconciliation tests** |Error| fct_payment_events_reconciliation_check.sql - Verifies that rerord counts in fct_payment_events and stg_events is the same
 |**dbt_utils tests** |Error| fct_payments.days_to_payout - dbt_utils.expression_is_true:  ">= 0" used here. In case of false the record will be stored in validation table (store_failures: true )
 |                    |Warning| fct_payments.days_to_charge_back - dbt_utils.accepted_range: min_value: 10  max_value: 60
+|**singular tests** |Error| fct_payments_milestones_in_order.sql - checks that fct_payments.payed_out is not before submitted_at
+|                   |Error| assert_payment_amount_positive.sql - Validates that fct_payment.amount is >=0 
+|                   |Error| fct_payment_events_reconciliation_check.sql - Verifies that record counts in fct_payment_events and stg_events is the same
+|**dbt_utils.unique_combination_of_columns**|Error|In merchant_snapshot.yml - Uniqueness of columns merchant_i, dbt_valid_from is validated
+
+
 
 **Test coverage:**
 
@@ -185,14 +186,17 @@ We can check tables to get testing coverage related information:
 
 ### Some design decisions:
 
-* **Monthly partitions**  - Decision was made to parition table fct_payements by charge_date with granularity month. As analyzing data it was clear that avarage payment count for one month is about 82k, and as most probably accessing fact table in most time is filtered by payment date in some interval.
+
+* **Monthly partitions**  - Decision was made to partition table fct_payments by charge_date with granularity month. Analyzing data it was discovered that average payment count for one month is about 45k, in one day about 1,6k. So day granularity would be too small, that is why month is used here.
+
 
 * **Hash surrogate keys instead of sequences** - Decision was made to use hash keys (dbt_utils.generate_surrogate_key(natural_key)) because hashing natural keys ensures keys are deterministic, idempotent across incremental runs, and safe for parallel processing.
 
 
-* **The 1 GB / 2 GB cost caps** - As we have incremental materialization for fct_payment_events and source 'events' are big table here ( 3.8 mil records) each run have to analyze all the records according by event_at column. That is the reason for prod mode in profiles.yml is doubled compare to dev mode. In dev mode we can use uv run dbt build --full-refresh.
+* **The 1 GB / 2 GB cost caps** - The incremental MERGE costs about 1.1–1.2 GB, versus about 0.3 GB for a full rebuild, because the source isn't partitioned and the MERGE scans the target.
+
 
 * **The evaluator disabled in prod** - dbt_project_evaluator inspects your DAG, naming conventions, documentation, and test coverage—metadata that only changes when code is modified, not when new production data arrives. So running it in prod wastes compute, clutters schemas, and risks unnecessary alerts without adding runtime value.
 
 
-* **Snapshot with check_cols: all** - Setting up a dbt snapshot with check_cols: all  here makes sense becaus that way we automatically captures historical changes across every column in a table without requiring a reliable updated_at timestamp or manual column maintenance.
+* **Snapshot with check_cols: all** - Setting up a dbt snapshot with check_cols: all  here makes sense because that way we automatically captures historical changes across every column in a table without requiring a reliable updated_at timestamp or manual column maintenance.
