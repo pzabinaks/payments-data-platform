@@ -41,7 +41,7 @@ Dbt project that transforms raw direct-debit style payment data in BigQuery into
 |            | **merchant_snapshot** - SCD2 history of raw.merchants, all columns, with handled  dbt_valid_from/dbt_valid_to|snapshots
 
  *Note:
-    For prod mode dataset names will be: raw, staging,marts etc. In dev mode run project will be concatenated in name like: dbt_dev_marts,dbt_dev_staging...
+    For prod mode dataset names will be: staging,marts etc. In dev mode run project will be concatenated in name like: dbt_dev_marts,dbt_dev_staging...
     This is handled by macros generate_schema_names.sql
 
 
@@ -58,12 +58,12 @@ to restrict how much of the existing destination table BigQuery scans during a M
 
 ### Setup:
 
-    Prerequisites:
+Prerequisites:
 
-    * **Python & `uv`:** Install [uv](https://astral.sh).
-    * **Google Cloud CLI:** Install the [Google Cloud SDK (`gcloud`)](https://google.com).
-    * **raw data loaded:** Raw data has to be loaded using (upload_files_to_gcs.sh → load_bigquery.sh)
-    * **navigate to transform folder:**  cd transform
+  * **Python & `uv`:** Install [uv](https://astral.sh).
+  * **Google Cloud CLI:** Install the [Google Cloud SDK (`gcloud`)](https://google.com).
+  * **raw data loaded:** Raw data has to be loaded using (upload_files_to_gcs.sh → load_bigquery.sh)
+  * **navigate to transform folder:**  cd transform
 
 
 
@@ -162,13 +162,13 @@ to restrict how much of the existing destination table BigQuery scans during a M
 |                    |Error| stg_customers  - country exists in countries.csv seed
 | **accepted values** |Error| stg_payments  - status in: 'paid_out','failed','confirmed','charged_back','submitted'
 |                     |Error| stg_payments  - currency in: 'EUR','GBP'
-|                     |Error| stg_event  - status in: 'charged_back','confirmed','failed','paid_out','pending_submission','submitted'
+|                     |Error| stg_events  - status in: 'charged_back','confirmed','failed','paid_out','pending_submission','submitted'
 |**dbt_utils tests** |Error| fct_payments.days_to_payout - dbt_utils.expression_is_true:  ">= 0" used here. In case of false the record will be stored in validation table (store_failures: true )
 |                    |Warning| fct_payments.days_to_charge_back - dbt_utils.accepted_range: min_value: 10  max_value: 60
-|**singular tests** |Error| fct_payments_milestones_in_order.sql - checks that fct_payments.payed_out is not before submitted_at
-|                   |Error| assert_payment_amount_positive.sql - Validates that fct_payment.amount is >=0 
+|**singular tests** |Error| fct_payments_milestones_in_order.sql - checks that fct_payments.payed_out_At is not before submitted_at
+|                   |Error| assert_payment_amount_positive.sql - Validates that fct_payment.amount is >0 
 |                   |Error| fct_payment_events_reconciliation_check.sql - Verifies that record counts in fct_payment_events and stg_events is the same
-|**dbt_utils.unique_combination_of_columns**|Error|In merchant_snapshot.yml - Uniqueness of columns merchant_i, dbt_valid_from is validated
+|**dbt_utils.unique_combination_of_columns**|Error|In merchants_snapshot_check.sql - Uniqueness of columns merchant_id, dbt_valid_from is validated
 
 
 
@@ -193,7 +193,7 @@ We can check tables to get testing coverage related information:
 * **Hash surrogate keys instead of sequences** - Decision was made to use hash keys (dbt_utils.generate_surrogate_key(natural_key)) because hashing natural keys ensures keys are deterministic, idempotent across incremental runs, and safe for parallel processing.
 
 
-* **The 1 GB / 2 GB cost caps** - The incremental MERGE costs about 1.1–1.2 GB, versus about 0.3 GB for a full rebuild, because the source isn't partitioned and the MERGE scans the target.
+* **The 1 GB / 2 GB cost caps** - The incremental MERGE costs about 1.1–1.2 GB, versus about 0.3 GB for a full rebuild, because the source isn't partitioned and the MERGE scans the target.So prod has a 2 GB cap to allow the incremental merge, while dev keeps 1 GB to catch mistakes early.
 
 
 * **The evaluator disabled in prod** - dbt_project_evaluator inspects your DAG, naming conventions, documentation, and test coverage—metadata that only changes when code is modified, not when new production data arrives. So running it in prod wastes compute, clutters schemas, and risks unnecessary alerts without adding runtime value.
