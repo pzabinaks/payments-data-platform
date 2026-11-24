@@ -51,8 +51,10 @@ snapshots:
 
 sources:
   payments_dbt:
-    raw:
-      +enabled: true
+    staging:
+      raw:        # folder
+        raw:      # source name
+          +enabled: true
 
 data_tests:
   dbt_project_evaluator:
