@@ -114,3 +114,19 @@ To check undocumented parts package dbt_project_evaluator can be used:
      SELECT *
        FROM `payments-data-platform-pz01126.dbt_dev.fct_documentation_coverage`; 
 
+
+
+
+-------------------------------------------------------------------------------------------------------
+Airflow: 
+--------------------------------------------------------------------------------------------------------
+* When you trigger a DAG manually, logical_date defaults to the exact current timestamp in UTC at the moment you trigger the run.
+* If I set  schedule="@daily", start_date 30 days ago and catchup=True, then unpause the DAG, in such case 30 runs will be scheduled and started, with each run's logical_date set to midnight.
+* Using start_date=datetime.now() is a bug because Airflow re-evaluates your DAG file every few seconds, making start_date a constantly moving target in the future that the scheduler can never reach.
+
+
+
+
+To run dag without checking UI: (dag_id is defined in .py in folder/dags)
+   cd ~/dev/payments-data-platform/orchestration
+   uv run --env-file .env airflow dags test dag_id
