@@ -126,7 +126,6 @@ Prerequisites:
            type: bigquery
            maximum_bytes_billed: 2000000000   # 2 GB per query  
     ```
-    *(Replace `project_name` and `your_project_id` with your dbt project name and GCP project ID.)*
 
 5. **Verify the connection**
 
@@ -165,8 +164,8 @@ Prerequisites:
 |                     |Error| stg_events  - status in: 'charged_back','confirmed','failed','paid_out','pending_submission','submitted'
 |**dbt_utils tests** |Error| fct_payments.days_to_payout - dbt_utils.expression_is_true:  ">= 0" used here. In case of false the record will be stored in validation table (store_failures: true )
 |                    |Warning| fct_payments.days_to_charge_back - dbt_utils.accepted_range: min_value: 10  max_value: 60
-|**singular tests** |Error| fct_payments_milestones_in_order.sql - checks that fct_payments.payed_out_At is not before submitted_at
-|                   |Error| assert_payment_amount_positive.sql - Validates that fct_payment.amount is >0 
+|**singular tests** |Error| fct_payments_milestones_in_order.sql - checks that fct_payments.paid_out_At is not before submitted_at
+|                   |Error| assert_payment_amount_positive.sql - Validates that fct_payment.amount is >0
 |                   |Error| fct_payment_events_reconciliation_check.sql - Verifies that record counts in fct_payment_events and stg_events is the same
 |**dbt_utils.unique_combination_of_columns**|Error|In merchants_snapshot_check.sql - Uniqueness of columns merchant_id, dbt_valid_from is validated
 
