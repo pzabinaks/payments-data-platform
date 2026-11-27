@@ -120,13 +120,96 @@ To check undocumented parts package dbt_project_evaluator can be used:
 -------------------------------------------------------------------------------------------------------
 Airflow: 
 --------------------------------------------------------------------------------------------------------
+To install, navigate to orchestration and execute:
+navigate to /orchestration
+
+HOST="raw.githubusercontent.com"
+FILE="apache/airflow/constraints-3.4.0/constraints-3.12.txt"
+uv pip install --python .venv/bin/python "apache-airflow==3.4.0" --constraint "https://${HOST}/${FILE}"
+
+
+
+
+To install apache-airflow-providers-google:
+
+need to modify project.toml  => requires-python = ">=3.12,<3.13" to  resolve dependencies for every future Python version (including 3.15+), where google-cloud-aiplatform fails against the 3.12 constraints file.
+
+THEN
+navigate to /orchestration
+
+uv add "apache-airflow==3.4.0" "apache-airflow-providers-google" --constraints https://raw.githubusercontent.com/apache/airflow/constraints-3.4.0/constraints-3.12.txt
+
+
+
+
 * When you trigger a DAG manually, logical_date defaults to the exact current timestamp in UTC at the moment you trigger the run.
 * If I set  schedule="@daily", start_date 30 days ago and catchup=True, then unpause the DAG, in such case 30 runs will be scheduled and started, with each run's logical_date set to midnight.
 * Using start_date=datetime.now() is a bug because Airflow re-evaluates your DAG file every few seconds, making start_date a constantly moving target in the future that the scheduler can never reach.
 
+.env file example
+
+AIRFLOW_HOME=/home/../orchestration/airflow_home
+AIRFLOW__CORE__DAGS_FOLDER=/home/../orchestration/dags
+AIRFLOW__CORE__LOAD_EXAMPLES=False
 
 
 
-To run dag without checking UI: (dag_id is defined in .py in folder/dags)
+
+"Retry" approach analyze:
+---------------------------------------------------------------------------------------------------------
+**upload_files_to_gcs.sh**
+- `gcloud storage cp` overwrites objects with the same name, so a retry is OK for fixed file names.
+- Risk: the source changes between attempts. `cp` never deletes, so stale files stay in GCS.
+  `gcloud storage rsync --delete-unmatched-destination-objects` mirrors the source exactly.
+- Better design: a **date parameter** (Airflow passes `{{ ds }}`). Upload only that day's files to
+  `gs://…-raw/<table>/dt=YYYY-MM-DD/`. A retry or Clear touches only its own day.
+- No date passed means **fail** (no silent default to yesterday: timezone / late-run / backfill risk).
+  Use `${1:?usage…}` and validate with `date -d "$1" +%F`.
+- Small leftovers: the file count uses `*.parquet` but `cp` copies everything in `domain/`;
+  the `cd` in `SOURCE_DIR=$(…)` runs before the `-d` check.
+
+**load_bigquery.sh**
+- Idempotent thanks to **`--replace`** (WRITE_TRUNCATE). Without it, `bq load` appends, so every retry
+  duplicates the data.
+- Load jobs are **atomic**: a failure leaves the table unchanged.
+- For daily data, replace the **partition**, not the table: `table$YYYYMMDD --replace`
+  (Oracle: `EXCHANGE PARTITION`).
+
+
+**Recon procedure (recon_run_log / recon_exceptions)**
+- Plain INSERTs, so each retry adds rows. That's not wrong: **keeping every run is the audit trail**.
+- Store `business_date`, `run_id` (unique per attempt), `started_at`.
+- Option A, an `is_last` flag: INSERT + UPDATE, two steps that can become inconsistent and cost extra DML.
+- Option B (preferred for logs): **derive** latest in a view:
+  `QUALIFY ROW_NUMBER() OVER (PARTITION BY business_date ORDER BY started_at DESC) = 1`,
+  then join the exceptions to the latest run_id.
+- Rule: append-only logs, derive "current" at read time. Dimensions queried constantly, store it (`is_current`).
+- A dbt snapshot doesn't fit: snapshots track **overwritten** rows (merchants), and the log is append-only.
+  The reverse design (overwrite a status table + snapshot) loses attempts between snapshot runs.
+
+**dbt incremental (fct_payment_events)**
+- MERGE on `unique_key` makes a second run UPDATE matched rows with the same values.
+  **Idempotent**, but unnecessary work (part of the ~1.1 GB per run).
+- Day 19 bug: `incremental_predicates` filters the **target** side of the MERGE. Target rows outside it are
+  invisible, so the source row is NOT MATCHED and gets INSERTed as a duplicate (23,182 duplicates).
+- **An incremental MERGE is idempotent only if the target window (predicates) covers at least the
+  source window (lookback).**
+
+
+HOW TO RUN: 
+
+* To start listener process: 
+
+cd ~/dev/payments-data-platform/orchestration
+uv run python -c "import sys; print(sys.prefix)"   # expect .../orchestration/.venv
+uv run --env-file .env airflow standalone
+
+
+* To run dag without checking in UI: (dag_id is defined in .py in folder/dags)
    cd ~/dev/payments-data-platform/orchestration
    uv run --env-file .env airflow dags test dag_id
+
+
+* To stop it press Ctrl+C in CMD or:
+ps aux | grep -i airflow | grep -v grep   # see what's still running
+pkill -f "airflow"                         # stop all of them

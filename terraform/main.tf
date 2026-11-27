@@ -31,7 +31,7 @@ resource "google_storage_bucket_iam_member" "pdp_loader_read" {
 
   bucket = google_storage_bucket.my_bucket.name
 
-  role = "roles/storage.objectViewer"
+  role = "roles/storage.objectUser"
 
   member = "serviceAccount:${var.loader_sa_email}"
 }
