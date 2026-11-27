@@ -2,6 +2,8 @@ from pathlib import Path
 import json
 import requests
 import tempfile
+from requests.adapters import HTTPAdapter     # part of requests
+from urllib3.util.retry import Retry          # urllib3 is installed automatically together with request
 
 BASE_URL = "https://api.frankfurter.dev/v2/rates"
 
@@ -25,6 +27,8 @@ def get_daily_rates(day,quotes,provider):
     session = make_session()
     rates = fetch_rates(session,day, day, quotes, provider)
     file_path = Path(tempfile.gettempdir()) / f"fx_rates_{day}.json"
-    file_path.write_text(json.dumps(rates, indent=2), encoding="utf-8")
+    ndjson = "\n".join(json.dumps(row) for row in rates) + "\n"
+    file_path.write_text(ndjson, encoding="utf-8")
+
     
     return str(file_path)
